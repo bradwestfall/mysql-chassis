@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "mysql-chassis",
   "version": "0.0.1",
   "description": "Wrapper code for node-mysql",
