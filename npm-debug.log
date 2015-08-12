@@ -1,0 +1,34 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'node',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   '--save',
+1 verbose cli   'git@github.com:bradwestfall/node-mysql-chassis.git' ]
+2 info using npm@2.5.1
+3 info using node@v0.10.23
+4 warn package.json mysql-chassis@0.0.1 No repository field.
+5 warn package.json mysql-chassis@0.0.1 No README data
+6 warn package.json fs@0.0.2 fs is also the name of a node core module.
+7 warn package.json fs@0.0.2 No description
+8 warn package.json fs@0.0.2 No repository field.
+9 warn package.json path@0.11.14 path is also the name of a node core module.
+10 verbose stack Error: Unsupported URL Type: github.com:bradwestfall/node-mysql-chassis.git
+10 verbose stack     at parseUrl (/usr/local/lib/node_modules/npm/node_modules/npm-package-arg/npa.js:173:13)
+10 verbose stack     at npa (/usr/local/lib/node_modules/npm/node_modules/npm-package-arg/npa.js:74:12)
+10 verbose stack     at resolver (/usr/local/lib/node_modules/npm/lib/install.js:756:42)
+10 verbose stack     at /usr/local/lib/node_modules/npm/node_modules/slide/lib/async-map.js:52:35
+10 verbose stack     at Array.forEach (native)
+10 verbose stack     at /usr/local/lib/node_modules/npm/node_modules/slide/lib/async-map.js:52:11
+10 verbose stack     at Array.forEach (native)
+10 verbose stack     at asyncMap (/usr/local/lib/node_modules/npm/node_modules/slide/lib/async-map.js:51:8)
+10 verbose stack     at /usr/local/lib/node_modules/npm/lib/install.js:655:5
+10 verbose stack     at /usr/local/lib/node_modules/npm/lib/install.js:324:22
+11 verbose cwd /Users/bradwestfall/Sites/mysql-chassis
+12 error Darwin 14.4.0
+13 error argv "node" "/usr/local/bin/npm" "install" "--save" "git@github.com:bradwestfall/node-mysql-chassis.git"
+14 error node v0.10.23
+15 error npm  v2.5.1
+16 error Unsupported URL Type: github.com:bradwestfall/node-mysql-chassis.git
+17 error If you need help, you may report this error at:
+17 error     <http://github.com/npm/npm/issues>
+18 verbose exit [ 1, true ]
