@@ -1,6 +1,6 @@
 # Node MySQL Chassis
 
-Node MySQL Chassis wrapps [node-mysql](https://github.com/felixge/node-mysql) and provides a small abstraction layer to write SQL more easily
+Node MySQL Chassis wraps [node-mysql](https://github.com/felixge/node-mysql) and provides a small abstraction layer to write SQL more easily
 
 ## Install
 
@@ -49,7 +49,7 @@ db.select('SELECT * FROM user WHERE user_id = :id', values, function(err, rows, 
 
 #### .selectFile(filename, values, callback)
 
-`.selectFile()` works almost exaclty like `.select()` except it takes a filename instead of SQL:
+`.selectFile()` works almost exactly like `.select()` except it takes a filename instead of SQL:
 
 ```js
 var values = {id: 1};
@@ -58,7 +58,7 @@ db.selectFile('user.sql', values, function(err, rows, fields) {
 });
 ```
 
-Note that the filename can writen with or without the `.sql` extension. The file will be found in the `sqlPath` as set during initialization. Using files to store SQL will allow developers to write multiline SQL as follows:
+Note that the filename can written with or without the `.sql` extension. The file will be found in the `sqlPath` as set during initialization. Using files to store SQL will allow developers to write multiline SQL as follows:
 
 user.sql:
 ```sql
