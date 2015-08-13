@@ -85,7 +85,7 @@ This method will write your `UPDATE` statement, let's update my name:
 
 ```js
 var values = {name: 'Bradley'};
-db.insert('user', values, {user_id: 1}, function(err, affectedRows) {
+db.update('user', values, {user_id: 1}, function(err, affectedRows) {
   // err: (same as select)
   // affectedRows: The number of affected rows
 });
