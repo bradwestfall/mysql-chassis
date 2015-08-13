@@ -81,7 +81,7 @@ db.insert('user', values, function(err, id) {
 
 ### .update(table, values, where, callback)
 
-This method will write your `UPDATE` statement, let's update my name:
+This method will write your `UPDATE` statement. Let's update my name:
 
 ```js
 var values = {name: 'Bradley'};
