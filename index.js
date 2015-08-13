@@ -33,7 +33,6 @@ module.exports = {
         this.connection.config.queryFormat = function(query, values) {
             if (!values) return query;
             return query.replace(/\:(\w+)/g, function (txt, key) {
-                console.log(txt);
                 if (values.hasOwnProperty(key)) {
                     return this.escape(values[key]);
                 }
@@ -134,7 +133,7 @@ module.exports = {
         for (var key in where) {
             whereArray.push('`' + key + '` = ' + this.connection.escape(where[key]));
         }
-        return 'WHERE' + whereArray.join(' AND '); 
+        return 'WHERE ' + whereArray.join(' AND '); 
     }
     
 }
