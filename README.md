@@ -30,9 +30,9 @@ Call without binding SQL values:
 
 ```js
 db.select('SELECT * FROM user', function(err, rows, fields) {
-  // err will have node-mysql's error if applicable
-  // rows is always an array of objects returned from the query. It will be an empty array if no results
-  // fields is the field data if applicable
+  // err: Will have node-mysql's error if applicable
+  // rows: Is always an array of objects returned from the query. It will be an empty array if no results
+  // fields: Is the field data if applicable
 });
 ```
 
@@ -66,3 +66,34 @@ SELECT name
 FROM user
 WHERE user_id = :id
 ```
+
+### .insert(table, values, callback)
+
+This method will write your `INSERT` statement. The example assumes database columns: `name` and `email`
+
+```js
+var values = {name: 'Brad', email: 'brad@foobar.com'};
+db.insert('user', values, function(err, id) {
+  // err: (same as select)
+  // id: The Insert ID
+});
+```
+
+### .update(table, values, where, callback)
+
+This method will write your `UPDATE` statement, let's update my name:
+
+```js
+var values = {name: 'Bradley'};
+db.insert('user', values, {user_id: 1}, function(err, affectedRows) {
+  // err: (same as select)
+  // affectedRows: The number of affected rows
+});
+```
+
+Notice that the `where` argument is an object. This will convert to `WHERE user_id = 1`
+
+
+
+
+
