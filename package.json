@@ -2,19 +2,32 @@
   "name": "mysql-chassis",
   "version": "0.0.3",
   "description": "Wrapper code for node-mysql",
-  "main": "index.js",
+  "main": "build.js",
+  "jsnext:main": "index.js",
   "scripts": {
+    "build": "rm build.js; npm run lint && rollup -c",
+    "lint": "standard index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "mysql"
   ],
   "author": "Brad Westfall",
+  "maintainers": [
+    "Kevin Lanni <therealklanni@gmail.com>"
+  ],
   "license": "MIT",
   "dependencies": {
     "fs": "0.0.2",
     "lodash": "^3.10.1",
     "mysql": "^2.8.0",
     "path": "^0.11.14"
+  },
+  "devDependencies": {
+    "babel": "^6.3.26",
+    "babel-preset-es2015-rollup": "^1.0.0",
+    "rollup": "^0.23.1",
+    "rollup-plugin-babel": "^2.3.3",
+    "standard": "^5.4.1"
   }
 }
