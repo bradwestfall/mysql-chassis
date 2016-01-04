@@ -1,144 +1,90 @@
-'use strict';
+import mysql from 'mysql'
+import path from 'path'
+import fs from 'fs'
 
-var mysql = require('mysql');
-var path = require('path');
-var fs = require('fs');
-var _ = require('lodash');
+const getInsertValues = (values) => {
+  const valuesArray = []
 
-module.exports = {
-
-  connection: null,
-  settings: {
-    host: 'localhost',
-    database: null,
-    user: null,
-    password: null,
-    sqlPath: null
-  },
-
-  init: function(options) {
-
-    // Extend Default Settings
-    this.settings = _.extend(this.settings, options);
-
-    // Connection arguments
-    this.connection = mysql.createConnection({
-      host     : this.settings.host,
-      database : this.settings.database,
-      user     : this.settings.user,
-      password : this.settings.password
-    });
-
-    // Configure custom parameter binding
-    this.connection.config.queryFormat = function(query, values) {
-      if (!values) return query;
-      return query.replace(/\:(\w+)/g, function (txt, key) {
-        if (values.hasOwnProperty(key)) {
-          return this.escape(values[key]);
-        }
-        return txt;
-      }.bind(this));
-    };
-
-    // Connect
-    this.connection.connect(function(err) {
-      if (err) {
-        console.error('error connecting: ' + err.stack);
-        return;
-      }
-    });
-
-  },
-
-  /****************************************
-  SELECT
-  *****************************************/
-
-  select: function(sql, values, next) {
-
-    // overload
-    if (typeof(values) == 'function') {
-      next = values;
-      values = {};
-    }
-
-    this.connection.query(sql, values, function(err, rows, fields) {
-      if (err) {
-        next(err);
-      } else {
-        next(null, rows, fields)
-      }
-    });
-  },
-
-  selectFile: function(filename, values, next) {
-
-    // overload
-    if (typeof(values) == 'function') {
-      next = values;
-      values = {};
-    }
-
-    var _this = this;
-
-    // Get full path
-    filename = path.join(_this.settings.sqlPath, filename + (path.extname(filename) == '.sql' ? '' : '.sql'));
-
-    // Read file and execute as SQL statement
-    fs.readFile(filename, 'utf8', function(err, sql) {
-      if (err) {
-        next('Cannot find: ' + err.path);
-      } else {
-        _this.select(sql, values, next);
-      }
-    });
-  },
-
-  /****************************************
-  INSERT / UPDATE
-  *****************************************/
-
-  insert: function(table, values, next) {
-    var sql = 'INSERT INTO `' + table + '` SET ' + this.getInsertValues(values);
-    this.connection.query(sql, function(err, rows, fields) {
-      if (err) {
-        next(err);
-      } else {
-        next(null, rows.insertId);
-      }
-    });
-  },
-
-  update: function(table, values, where, next) {
-    var sql = 'UPDATE `' + table + '` SET ' + this.getInsertValues(values) + this.sqlWhere(where);
-    this.connection.query(sql, function(err, rows, fields) {
-      if (err) {
-        next(err);
-      } else {
-        next(null, rows.affectedRows);
-      }
-    });
-  },
-
-  /****************************************
-  Helpers
-  *****************************************/
-
-  getInsertValues: function(values) {
-    var valuesArray = [];
-    for (var key in values) {
-      valuesArray.push('`' + key + '` = ' + this.connection.escape(values[key]));
-    }
-    return valuesArray.join();
-  },
-
-  sqlWhere: function(where) {
-    if (!where) return;
-    var whereArray = [];
-    for (var key in where) {
-      whereArray.push('`' + key + '` = ' + this.connection.escape(where[key]));
-    }
-    return 'WHERE ' + whereArray.join(' AND ');
+  for (let key in values) {
+    valuesArray.push('`' + key + '` = ' + mysql.escape(values[key]))
   }
 
+  return valuesArray.join()
 }
+
+const sqlWhere = (where) => {
+  if (!where) return
+
+  const whereArray = []
+
+  for (let key in where) {
+    whereArray.push('`' + key + '` = ' + mysql.escape(where[key]))
+  }
+
+  return 'WHERE ' + whereArray.join(' AND ')
+}
+
+class MySql {
+  constructor (options = { host: 'localhost' }) {
+    this.connection = mysql.createConnection(options)
+    this.sqlPath = options.sqlPath || './sql'
+  }
+
+  select (sql, values, next = values) {
+    if (typeof values === 'function') {
+      values = {}
+    }
+
+    this.connection.query(sql, values, (err, rows, fields) => next(err, rows, fields))
+  }
+
+  selectFile (filename, values, next = values) {
+    if (typeof values === 'function') {
+      values = {}
+    }
+
+    const _this = this
+
+    // Get full path
+    const filePath = path.resolve(path.join(
+      this.sqlPath,
+      filename + (path.extname(filename) === '.sql' ? '' : '.sql')
+    ))
+
+    // Read file and execute as SQL statement
+    fs.readFile(filePath, 'utf8', (err, sql) => {
+      if (err) {
+        next('Cannot find: ' + err.path)
+      } else {
+        sql = sql.replace(/\n*$/m, ' ').replace(/ $/, '')
+        _this.select(sql, values, next)
+      }
+    })
+  }
+
+  insert (table, values, next) {
+    const sql = `INSERT INTO \`${table}\` SET ${getInsertValues(values)}`
+
+    this.connection.query(sql, (err, rows, fields) => {
+      if (err) {
+        next(err)
+      } else {
+        next(null, rows.insertId)
+      }
+    })
+  }
+
+  update (table, values, where, next) {
+    const sql = `UPDATE \`${table}\` SET ${getInsertValues(values)} ${sqlWhere(where)}`
+
+    this.connection.query(sql, (err, rows, fields) => {
+      if (err) {
+        next(err)
+      } else {
+        next(null, rows.affectedRows)
+      }
+    })
+  }
+}
+
+export default MySql
