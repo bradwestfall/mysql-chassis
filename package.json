@@ -2,10 +2,10 @@
   "name": "mysql-chassis",
   "version": "0.0.3",
   "description": "Wrapper code for node-mysql",
-  "main": "build.js",
-  "jsnext:main": "index.js",
+  "main": "dist/mysql-chassis.js",
+  "jsnext:main": "dist/mysql-chassis.es2015.js",
   "scripts": {
-    "build": "rm build.js; npm run lint && rollup -c",
+    "build": "rm -rf dist; npm run lint && rollup -c && rollup -cf es6 -o dist/mysql-chassis.es2015.js",
     "lint": "standard index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
