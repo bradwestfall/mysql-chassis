@@ -86,6 +86,14 @@ describe('mysql-chassis', () => {
         done()
       })
     })
+
+    it('should callback with error when file does not exist', done => {
+      mysql.selectFile('DOES_NOT_EXIST', error => {
+        expect(mysql.connection.query).to.have.been.calledWith('SELECT 1')
+        expect(error).to.exist
+        done()
+      })
+    })
   })
 
   describe('insert method', () => {
