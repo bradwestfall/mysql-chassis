@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rm -rf dist; npm run lint && rollup -c && rollup -cf es6 -o dist/mysql-chassis.es2015.js",
     "lint": "standard index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --compilers js:babel-register"
   },
   "keywords": [
     "mysql"
@@ -26,8 +26,13 @@
   "devDependencies": {
     "babel": "^6.3.26",
     "babel-preset-es2015-rollup": "^1.0.0",
+    "babel-register": "^6.3.13",
+    "chai": "^3.4.1",
+    "mocha": "^2.3.4",
     "rollup": "^0.23.1",
     "rollup-plugin-babel": "^2.3.3",
+    "sinon": "^1.17.2",
+    "sinon-chai": "^2.8.0",
     "standard": "^5.4.1"
   }
 }
