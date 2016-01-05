@@ -30,19 +30,21 @@ class MySql {
     this.sqlPath = options.sqlPath || './sql'
   }
 
-  select (sql, values, next = values) {
-    if (typeof values === 'function') {
-      values = {}
-    }
+  select (sql, values = {}) {
+    const _this = this
 
-    this.connection.query(sql, values, (err, rows, fields) => next(err, rows, fields))
+    return new Promise((res, rej) => {
+      _this.connection.query(sql, values, (err, rows, fields) => {
+        if (err) {
+          rej(err)
+        } else {
+          res(rows, fields)
+        }
+      })
+    })
   }
 
-  selectFile (filename, values, next = values) {
-    if (typeof values === 'function') {
-      values = {}
-    }
-
+  selectFile (filename, values = {}) {
     const _this = this
 
     // Get full path
@@ -51,38 +53,44 @@ class MySql {
       filename + (path.extname(filename) === '.sql' ? '' : '.sql')
     ))
 
-    // Read file and execute as SQL statement
-    fs.readFile(filePath, 'utf8', (err, sql) => {
-      if (err) {
-        next('Cannot find: ' + err.path)
-      } else {
-        sql = sql.replace(/\n*$/m, ' ').replace(/ $/, '')
-        _this.select(sql, values, next)
-      }
+    return new Promise((res, rej) => {
+      // Read file and execute as SQL statement
+      fs.readFile(filePath, 'utf8', (err, sql) => {
+        if (err) {
+          rej('Cannot find: ' + err.path)
+        } else {
+          sql = sql.replace(/\n*$/m, ' ').replace(/ $/, '')
+          _this.select(sql, values).then(res).catch(rej)
+        }
+      })
     })
   }
 
-  insert (table, values, next) {
+  insert (table, values = {}) {
     const sql = `INSERT INTO \`${table}\` SET ${getInsertValues(values)}`
 
-    this.connection.query(sql, (err, rows, fields) => {
-      if (err) {
-        next(err)
-      } else {
-        next(null, rows.insertId)
-      }
+    return new Promise((res, rej) => {
+      this.connection.query(sql, (err, rows, fields) => {
+        if (err) {
+          rej(err)
+        } else {
+          res(rows.insertId)
+        }
+      })
     })
   }
 
   update (table, values, where, next) {
     const sql = `UPDATE \`${table}\` SET ${getInsertValues(values)} ${sqlWhere(where)}`
 
-    this.connection.query(sql, (err, rows, fields) => {
-      if (err) {
-        next(err)
-      } else {
-        next(null, rows.affectedRows)
-      }
+    return new Promise((res, rej) => {
+      this.connection.query(sql, (err, rows, fields) => {
+        if (err) {
+          rej(err)
+        } else {
+          res(rows.affectedRows)
+        }
+      })
     })
   }
 }
