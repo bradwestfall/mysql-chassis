@@ -99,13 +99,13 @@ describe('mysql-chassis', () => {
     const sql = 'INSERT INTO `users` SET `1` = 1'
 
     query
-      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onFirstCall().callsArgWith(1, null, { insertId: 1 })
       .onSecondCall().callsArgWith(1, 'TEST ERROR')
 
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.insert('users', { 1: 1 })).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+      expect(mysql.insert('users', { 1: 1 })).to.eventually.eql(1).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -125,13 +125,13 @@ describe('mysql-chassis', () => {
     const sql = 'UPDATE `users` SET `1` = 1 WHERE `1` = 1'
 
     query
-      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onFirstCall().callsArgWith(1, null, { affectedRows: 1 })
       .onSecondCall().callsArgWith(1, 'TEST ERROR')
 
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.update('users', { 1: 1 }, { 1: 1 })).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+      expect(mysql.update('users', { 1: 1 }, { 1: 1 })).to.eventually.eql(1).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
