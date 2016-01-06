@@ -2,6 +2,7 @@ const chai = require('chai')
 const expect = chai.expect
 const sinon = require('sinon')
 chai.use(require('sinon-chai'))
+chai.use(require('chai-as-promised'))
 const MySql = require('../dist/mysql-chassis')
 
 describe('mysql-chassis', () => {
@@ -45,25 +46,24 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      mysql.select(sql, error => {
-        expect(mysql.connection.query).to.have.been.calledWith(sql)
-        expect(error).to.not.exist
-        done()
-      })
+      expect(mysql.select(sql)).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
 
-    it('should callback with error when internal query method errors', done => {
-      mysql.select(sql, error => {
-        expect(mysql.connection.query).to.have.been.calledWith(sql)
-        expect(error).to.exist
-        done()
-      })
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.select(sql)).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
   })
 
   describe('selectFile method', () => {
     const mysql = new MySql({ sqlPath: './test' })
     const query = sinon.stub()
+    const sql = 'SELECT 1'
 
     query
       .onFirstCall().callsArgWith(2, null, [{ 1: 1 }])
@@ -72,87 +72,83 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      mysql.selectFile('select', error => {
-        expect(mysql.connection.query).to.have.been.calledWith('SELECT 1')
-        expect(error).to.not.exist
-        done()
-      })
+      expect(mysql.selectFile('select')).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
 
-    it('should callback with error when internal query method errors', done => {
-      mysql.selectFile('select', error => {
-        expect(mysql.connection.query).to.have.been.calledWith('SELECT 1')
-        expect(error).to.exist
-        done()
-      })
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.selectFile('select')).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
 
-    it('should callback with error when file does not exist', done => {
-      mysql.selectFile('DOES_NOT_EXIST', error => {
-        expect(mysql.connection.query).to.have.been.calledWith('SELECT 1')
-        expect(error).to.exist
-        done()
-      })
+    it('should reject promise with error when file does not exist', done => {
+      expect(mysql.selectFile('DOES_NOT_EXIST')).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.not.been.called
+        })
     })
   })
 
   describe('insert method', () => {
     const mysql = new MySql()
     const query = sinon.stub()
+    const sql = 'INSERT INTO `users` SET `1` = 1'
 
     query
-      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onFirstCall().callsArgWith(1, null, { insertId: 1 })
       .onSecondCall().callsArgWith(1, 'TEST ERROR')
 
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      mysql.insert('users', { 1: 1 }, error => {
-        expect(mysql.connection.query).to.have.been.calledWith('INSERT INTO `users` SET `1` = 1')
-        expect(error).to.not.exist
-        done()
-      })
+      expect(mysql.insert('users', { 1: 1 })).to.eventually.eql(1).and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
 
-    it('should callback with error when internal query method errors', done => {
-      mysql.insert('users', { 1: 1 }, error => {
-        expect(mysql.connection.query).to.have.been.calledWith('INSERT INTO `users` SET `1` = 1')
-        expect(error).to.exist
-        done()
-      })
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.insert('users', { 1: 1 })).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.not.been.calledWith(sql)
+        })
     })
   })
 
   describe('update method', () => {
     const mysql = new MySql()
     const query = sinon.stub()
+    const sql = 'UPDATE `users` SET `1` = 1 WHERE `1` = 1'
 
     query
-      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onFirstCall().callsArgWith(1, null, { affectedRows: 1 })
       .onSecondCall().callsArgWith(1, 'TEST ERROR')
 
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      mysql.update('users', { 1: 1 }, { 1: 1 }, error => {
-        expect(mysql.connection.query).to.have.been.calledWith('UPDATE `users` SET `1` = 1 WHERE `1` = 1')
-        expect(error).to.not.exist
-        done()
-      })
+      expect(mysql.update('users', { 1: 1 }, { 1: 1 })).to.eventually.eql(1).and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
 
-    it('should callback with error when internal query method errors', done => {
-      mysql.update('users', { 1: 1 }, { 1: 1 }, error => {
-        expect(mysql.connection.query).to.have.been.calledWith('UPDATE `users` SET `1` = 1 WHERE `1` = 1')
-        expect(error).to.exist
-        done()
-      })
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.update('users', { 1: 1 }, { 1: 1 })).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
   })
 
   describe('delete method', () => {
     const mysql = new MySql()
     const query = sinon.stub()
+    sql = 'DELETE FROM `users` WHERE `1` = 1'
 
     query
       .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
@@ -161,19 +157,17 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      mysql.delete('users', { 1: 1 }, error => {
-        expect(mysql.connection.query).to.have.been.calledWith('DELETE FROM `users` WHERE `1` = 1')
-        expect(error).to.not.exist
-        done()
-      })
+      expect(mysql.delete('users', { 1: 1 })).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
 
-    it('should callback with error when internal query method errors', done => {
-      mysql.delete('users', { 1: 1 }, error => {
-        expect(mysql.connection.query).to.have.been.calledWith('DELETE FROM `users` WHERE `1` = 1')
-        expect(error).to.exist
-        done()
-      })
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.delete('users', { 1: 1 })).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
     })
   })
 })
