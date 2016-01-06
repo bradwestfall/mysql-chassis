@@ -46,7 +46,14 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.select(sql)).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+      expect(mysql.select(sql)).to.eventually.eql({
+        affectedRows: 0,
+        changedRows: 0,
+        fieldCount: 0,
+        insertId: 0,
+        fields: [],
+        rows: [{ 1: 1 }]
+      }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -72,7 +79,14 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.selectFile('select')).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+      expect(mysql.selectFile('select')).to.eventually.eql({
+        affectedRows: 0,
+        changedRows: 0,
+        fieldCount: 0,
+        insertId: 0,
+        fields: [],
+        rows: [{ 1: 1 }]
+      }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -105,7 +119,7 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.insert('users', { 1: 1 })).to.eventually.eql(1).and.notify(done)
+      expect(mysql.insert('users', { 1: 1 })).to.eventually.eql({ insertId: 1 }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -131,7 +145,7 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.update('users', { 1: 1 }, { 1: 1 })).to.eventually.eql(1).and.notify(done)
+      expect(mysql.update('users', { 1: 1 }, { 1: 1 })).to.eventually.eql({ affectedRows: 1 }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -157,7 +171,7 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.delete('users', { 1: 1 })).to.eventually.eql(1).and.notify(done)
+      expect(mysql.delete('users', { 1: 1 })).to.eventually.eql({ affectedRows: 1 }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
