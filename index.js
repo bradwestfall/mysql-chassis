@@ -24,6 +24,15 @@ const sqlWhere = (where) => {
   return 'WHERE ' + whereArray.join(' AND ')
 }
 
+const responseObj = {
+  fieldCount: 0,
+  affectedRows: 0,
+  insertId: 0,
+  changedRows: 0,
+  rows: [],
+  fields: []
+}
+
 class MySql {
   constructor (options = { host: 'localhost' }) {
     this.connection = mysql.createConnection(options)
@@ -34,11 +43,12 @@ class MySql {
     const _this = this
 
     return new Promise((res, rej) => {
-      _this.connection.query(sql, values, (err, rows, fields) => {
+      _this.connection.query(sql, values, (err, rows, fields = []) => {
         if (err) {
           rej(err)
         } else {
-          res(rows, fields)
+          // add rows directly if it's an array, otherwise assign them in
+          res(rows.length ? { ...responseObj, fields, rows } : { ...responseObj, fields, ...rows })
         }
       })
     })
@@ -75,7 +85,7 @@ class MySql {
         if (err) {
           rej(err)
         } else {
-          res(result.insertId)
+          res(result)
         }
       })
     })
@@ -90,7 +100,7 @@ class MySql {
         if (err) {
           rej(err)
         } else {
-          res(result.affectedRows)
+          res(result)
         }
       })
     })
@@ -105,7 +115,7 @@ class MySql {
         if (err) {
           rej(err)
         } else {
-          res(result.affectedRows)
+          res(result)
         }
       })
     })
