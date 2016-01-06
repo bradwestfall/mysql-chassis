@@ -151,13 +151,13 @@ describe('mysql-chassis', () => {
     sql = 'DELETE FROM `users` WHERE `1` = 1'
 
     query
-      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onFirstCall().callsArgWith(1, null, { affectedRows: 1 })
       .onSecondCall().callsArgWith(1, 'TEST ERROR')
 
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.delete('users', { 1: 1 })).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+      expect(mysql.delete('users', { 1: 1 })).to.eventually.eql(1).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })

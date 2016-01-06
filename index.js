@@ -95,6 +95,21 @@ class MySql {
       })
     })
   }
+
+  delete (table, where) {
+    const _this = this
+    const sql = `DELETE FROM \`${table}\` ${sqlWhere(where)}`
+
+    return new Promise((res, rej) => {
+      _this.connection.query(sql, (err, result) => {
+        if (err) {
+          rej(err)
+        } else {
+          res(result.affectedRows)
+        }
+      })
+    })
+  }
 }
 
 export default MySql
