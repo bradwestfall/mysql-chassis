@@ -71,11 +71,11 @@ class MySql {
     const sql = `INSERT INTO \`${table}\` SET ${getInsertValues(values)}`
 
     return new Promise((res, rej) => {
-      _this.connection.query(sql, (err, rows, fields) => {
+      _this.connection.query(sql, (err, result, fields) => {
         if (err) {
           rej(err)
         } else {
-          res(rows.insertId)
+          res(result.insertId)
         }
       })
     })
@@ -86,11 +86,11 @@ class MySql {
     const sql = `UPDATE \`${table}\` SET ${getInsertValues(values)} ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
-      _this.connection.query(sql, (err, rows, fields) => {
+      _this.connection.query(sql, (err, result) => {
         if (err) {
           rej(err)
         } else {
-          res(rows.affectedRows)
+          res(result.affectedRows)
         }
       })
     })
