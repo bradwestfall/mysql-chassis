@@ -67,28 +67,45 @@ class MySql {
   }
 
   insert (table, values = {}) {
+    const _this = this
     const sql = `INSERT INTO \`${table}\` SET ${getInsertValues(values)}`
 
     return new Promise((res, rej) => {
-      this.connection.query(sql, (err, rows, fields) => {
+      _this.connection.query(sql, (err, result, fields) => {
         if (err) {
           rej(err)
         } else {
-          res(rows.insertId)
+          res(result.insertId)
         }
       })
     })
   }
 
-  update (table, values, where, next) {
+  update (table, values, where) {
+    const _this = this
     const sql = `UPDATE \`${table}\` SET ${getInsertValues(values)} ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
-      this.connection.query(sql, (err, rows, fields) => {
+      _this.connection.query(sql, (err, result) => {
         if (err) {
           rej(err)
         } else {
-          res(rows.affectedRows)
+          res(result.affectedRows)
+        }
+      })
+    })
+  }
+
+  delete (table, where) {
+    const _this = this
+    const sql = `DELETE FROM \`${table}\` ${sqlWhere(where)}`
+
+    return new Promise((res, rej) => {
+      _this.connection.query(sql, (err, result) => {
+        if (err) {
+          rej(err)
+        } else {
+          res(result.affectedRows)
         }
       })
     })
