@@ -39,11 +39,23 @@ class MySql {
     this.sqlPath = options.sqlPath || './sql'
   }
 
-  select (sql, values = {}) {
-    const _this = this
+  static queryFormat (query, values) {
+    if (!values) {
+      return query
+    }
 
+    return query.replace(/\:(\w+)/g, (txt, key) =>
+      values.hasOwnProperty(key) ? mysql.escape(values[key]) : txt
+    )
+  }
+
+  query (sql, ...args) {
+    this.connection.query(MySql.queryFormat(sql), ...args)
+  }
+
+  select (sql, values = {}) {
     return new Promise((res, rej) => {
-      _this.connection.query(sql, values, (err, rows, fields = []) => {
+      this.query(sql, values, (err, rows, fields = []) => {
         if (err) {
           rej(err)
         } else {
@@ -55,8 +67,6 @@ class MySql {
   }
 
   selectFile (filename, values = {}) {
-    const _this = this
-
     // Get full path
     const filePath = path.resolve(path.join(
       this.sqlPath,
@@ -70,18 +80,17 @@ class MySql {
           rej('Cannot find: ' + err.path)
         } else {
           sql = sql.replace(/\n*$/m, ' ').replace(/ $/, '')
-          _this.select(sql, values).then(res).catch(rej)
+          this.select(sql, values).then(res).catch(rej)
         }
       })
     })
   }
 
   insert (table, values = {}) {
-    const _this = this
     const sql = `INSERT INTO \`${table}\` SET ${getInsertValues(values)}`
 
     return new Promise((res, rej) => {
-      _this.connection.query(sql, (err, result, fields) => {
+      this.query(sql, (err, result, fields) => {
         if (err) {
           rej(err)
         } else {
@@ -92,11 +101,10 @@ class MySql {
   }
 
   update (table, values, where) {
-    const _this = this
     const sql = `UPDATE \`${table}\` SET ${getInsertValues(values)} ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
-      _this.connection.query(sql, (err, result) => {
+      this.query(sql, (err, result) => {
         if (err) {
           rej(err)
         } else {
@@ -107,11 +115,10 @@ class MySql {
   }
 
   delete (table, where) {
-    const _this = this
     const sql = `DELETE FROM \`${table}\` ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
-      _this.connection.query(sql, (err, result) => {
+      this.query(sql, (err, result) => {
         if (err) {
           rej(err)
         } else {
