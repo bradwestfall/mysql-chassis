@@ -44,13 +44,19 @@ class MySql {
       return query
     }
 
-    return query.replace(/\:(\w+)/g, (txt, key) =>
+    return query.replace(/\:(\w+)/gm, (txt, key) =>
       values.hasOwnProperty(key) ? mysql.escape(values[key]) : txt
     )
   }
 
   query (sql, ...args) {
-    this.connection.query(MySql.queryFormat(sql), ...args)
+    let values
+
+    if (arguments.length > 2) {
+      [ values, ...args ] = args
+    }
+
+    this.connection.query(MySql.queryFormat(sql, values), ...args)
   }
 
   select (sql, values = {}) {
