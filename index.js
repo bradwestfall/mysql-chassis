@@ -39,9 +39,23 @@ class MySql {
     this.sqlPath = options.sqlPath || './sql'
   }
 
+  static queryFormat (query, values) {
+    if (!values) {
+      return query
+    }
+
+    return query.replace(/\:(\w+)/g, (txt, key) =>
+      values.hasOwnProperty(key) ? mysql.escape(values[key]) : txt
+    )
+  }
+
+  query (sql, ...args) {
+    this.connection.query(MySql.queryFormat(sql), ...args)
+  }
+
   select (sql, values = {}) {
     return new Promise((res, rej) => {
-      this.connection.query(sql, values, (err, rows, fields = []) => {
+      this.query(sql, values, (err, rows, fields = []) => {
         if (err) {
           rej(err)
         } else {
@@ -76,7 +90,7 @@ class MySql {
     const sql = `INSERT INTO \`${table}\` SET ${getInsertValues(values)}`
 
     return new Promise((res, rej) => {
-      this.connection.query(sql, (err, result, fields) => {
+      this.query(sql, (err, result, fields) => {
         if (err) {
           rej(err)
         } else {
@@ -90,7 +104,7 @@ class MySql {
     const sql = `UPDATE \`${table}\` SET ${getInsertValues(values)} ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
-      this.connection.query(sql, (err, result) => {
+      this.query(sql, (err, result) => {
         if (err) {
           rej(err)
         } else {
@@ -104,7 +118,7 @@ class MySql {
     const sql = `DELETE FROM \`${table}\` ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
-      this.connection.query(sql, (err, result) => {
+      this.query(sql, (err, result) => {
         if (err) {
           rej(err)
         } else {
