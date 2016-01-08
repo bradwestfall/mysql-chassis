@@ -43,6 +43,17 @@ describe('mysql-chassis', () => {
         value: 1
       })).to.equal(`SELECT 'name,date' FROM 'user' WHERE 'id' = 1`)
     })
+
+    it('should allow named parameter binding with `:` in multiline queries', () => {
+      expect(MySql.queryFormat(`SELECT :fields FROM :table
+        WHERE :field = :value`, {
+        fields: 'name,date',
+        table: 'user',
+        field: 'id',
+        value: 1
+      })).to.equal(`SELECT 'name,date' FROM 'user'
+        WHERE 'id' = 1`)
+    })
   })
 
   describe('select method', () => {
@@ -51,8 +62,8 @@ describe('mysql-chassis', () => {
     const sql = 'SELECT 1'
 
     query
-      .onFirstCall().callsArgWith(2, null, [{ 1: 1 }])
-      .onSecondCall().callsArgWith(2, 'TEST ERROR')
+      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onSecondCall().callsArgWith(1, 'TEST ERROR')
 
     mysql.connection = { query }
 
@@ -81,16 +92,17 @@ describe('mysql-chassis', () => {
   describe('selectFile method', () => {
     const mysql = new MySql({ sqlPath: './test' })
     const query = sinon.stub()
-    const sql = 'SELECT 1'
+    const sql = `SELECT *
+FROM user`
 
     query
-      .onFirstCall().callsArgWith(2, null, [{ 1: 1 }])
-      .onSecondCall().callsArgWith(2, 'TEST ERROR')
+      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onSecondCall().callsArgWith(1, 'TEST ERROR')
 
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.selectFile('select')).to.eventually.eql({
+      expect(mysql.selectFile('select', { table: 'user' })).to.eventually.eql({
         affectedRows: 0,
         changedRows: 0,
         fieldCount: 0,
@@ -104,7 +116,7 @@ describe('mysql-chassis', () => {
     })
 
     it('should reject promise with error when internal query method errors', done => {
-      expect(mysql.selectFile('select')).to.eventually.be.rejected.and.notify(done)
+      expect(mysql.selectFile('select', { table: 'user' })).to.eventually.be.rejected.and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
