@@ -34,6 +34,17 @@ describe('mysql-chassis', () => {
     })
   })
 
+  describe('queryFormat static method', () => {
+    it('should allow named parameter binding with `:`', () => {
+      expect(MySql.queryFormat('SELECT :fields FROM :table WHERE :field = :value', {
+        fields: 'name,date',
+        table: 'user',
+        field: 'id',
+        value: 1
+      })).to.equal(`SELECT 'name,date' FROM 'user' WHERE 'id' = 1`)
+    })
+  })
+
   describe('select method', () => {
     const mysql = new MySql()
     const query = sinon.stub()
