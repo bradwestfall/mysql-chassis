@@ -13,6 +13,14 @@ describe('mysql-chassis', () => {
       expect(mysql.connection).to.exist
     })
 
+    it('should have a query method', () => {
+      expect(mysql.query).to.exist
+    })
+
+    it('should have a queryFile method', () => {
+      expect(mysql.queryFile).to.exist
+    })
+
     it('should have a select method', () => {
       expect(mysql.select).to.exist
     })
@@ -56,6 +64,80 @@ describe('mysql-chassis', () => {
     })
   })
 
+  describe('query method', () => {
+    const mysql = new MySql()
+    const query = sinon.stub()
+    const sql = 'SELECT 1'
+
+    query
+      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onSecondCall().callsArgWith(1, 'TEST ERROR')
+
+    mysql.connection = { query }
+
+    it('should call internal query method', done => {
+      expect(mysql.query(sql)).to.eventually.eql({
+        affectedRows: 0,
+        changedRows: 0,
+        fieldCount: 0,
+        insertId: 0,
+        fields: [],
+        rows: [{ 1: 1 }]
+      }).and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
+    })
+
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.query(sql)).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
+    })
+  })
+
+  describe('queryFile method', () => {
+    const mysql = new MySql({ sqlPath: './test' })
+    const query = sinon.stub()
+    const sql = `SELECT *
+FROM user`
+
+    query
+      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onSecondCall().callsArgWith(1, 'TEST ERROR')
+
+    mysql.connection = { query }
+
+    it('should call internal query method', done => {
+      expect(mysql.queryFile('select', { table: 'user' })).to.eventually.eql({
+        affectedRows: 0,
+        changedRows: 0,
+        fieldCount: 0,
+        insertId: 0,
+        fields: [],
+        rows: [{ 1: 1 }]
+      }).and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
+    })
+
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.queryFile('select', { table: 'user' })).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
+    })
+
+    it('should reject promise with error when file does not exist', done => {
+      expect(mysql.queryFile('DOES_NOT_EXIST')).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.not.been.called
+        })
+    })
+  })
+
   describe('select method', () => {
     const mysql = new MySql()
     const query = sinon.stub()
@@ -68,14 +150,7 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.select(sql)).to.eventually.eql({
-        affectedRows: 0,
-        changedRows: 0,
-        fieldCount: 0,
-        insertId: 0,
-        fields: [],
-        rows: [{ 1: 1 }]
-      }).and.notify(done)
+      expect(mysql.select(sql)).to.eventually.eql([{ 1: 1 }]).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -102,14 +177,7 @@ FROM user`
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.selectFile('select', { table: 'user' })).to.eventually.eql({
-        affectedRows: 0,
-        changedRows: 0,
-        fieldCount: 0,
-        insertId: 0,
-        fields: [],
-        rows: [{ 1: 1 }]
-      }).and.notify(done)
+      expect(mysql.selectFile('select', { table: 'user' })).to.eventually.eql([{ 1: 1 }]).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })

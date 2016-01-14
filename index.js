@@ -49,7 +49,7 @@ class MySql {
     )
   }
 
-  query (sql, ...args) {
+  sql (sql, ...args) {
     let values
 
     if (arguments.length > 2) {
@@ -59,9 +59,9 @@ class MySql {
     this.connection.query(MySql.queryFormat(sql, values), ...args)
   }
 
-  select (sql, values = {}) {
+  query (sql, values = {}) {
     return new Promise((res, rej) => {
-      this.query(sql, values, (err, rows, fields = []) => {
+      this.sql(sql, values, (err, rows, fields = []) => {
         if (err) {
           rej(err)
         } else {
@@ -72,7 +72,7 @@ class MySql {
     })
   }
 
-  selectFile (filename, values = {}) {
+  queryFile (filename, values = {}) {
     // Get full path
     const filePath = path.resolve(path.join(
       this.sqlPath,
@@ -86,17 +86,27 @@ class MySql {
           rej('Cannot find: ' + err.path)
         } else {
           sql = sql.replace(/\n*$/m, ' ').replace(/ $/, '')
-          this.select(sql, values).then(res).catch(rej)
+          this.query(sql, values).then(res).catch(rej)
         }
       })
     })
+  }
+
+  select () {
+    return this.query(...arguments)
+      .then(result => result.rows)
+  }
+
+  selectFile () {
+    return this.queryFile(...arguments)
+      .then(result => result.rows)
   }
 
   insert (table, values = {}) {
     const sql = `INSERT INTO \`${table}\` SET ${getInsertValues(values)}`
 
     return new Promise((res, rej) => {
-      this.query(sql, (err, result, fields) => {
+      this.sql(sql, (err, result, fields) => {
         if (err) {
           rej(err)
         } else {
@@ -110,7 +120,7 @@ class MySql {
     const sql = `UPDATE \`${table}\` SET ${getInsertValues(values)} ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
-      this.query(sql, (err, result) => {
+      this.sql(sql, (err, result) => {
         if (err) {
           rej(err)
         } else {
@@ -124,7 +134,7 @@ class MySql {
     const sql = `DELETE FROM \`${table}\` ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
-      this.query(sql, (err, result) => {
+      this.sql(sql, (err, result) => {
         if (err) {
           rej(err)
         } else {
