@@ -2,17 +2,7 @@ import mysql from 'mysql'
 import path from 'path'
 import fs from 'fs'
 
-const getInsertValues = (values) => {
-  const valuesArray = []
-
-  for (let key in values) {
-    valuesArray.push('`' + key + '` = ' + mysql.escape(values[key]))
-  }
-
-  return valuesArray.join()
-}
-
-const sqlWhere = (where) => {
+const sqlWhere = where => {
   if (!where) return
 
   const whereArray = []
@@ -37,6 +27,7 @@ class MySql {
   constructor (options = { host: 'localhost' }) {
     this.connection = mysql.createConnection(options)
     this.sqlPath = options.sqlPath || './sql'
+    this.transforms = options.transforms || {}
   }
 
   static queryFormat (query, values) {
@@ -47,6 +38,38 @@ class MySql {
     return query.replace(/\:(\w+)/gm, (txt, key) =>
       values.hasOwnProperty(key) ? mysql.escape(values[key]) : txt
     )
+  }
+
+  transformValues (values) {
+    const newObj = {}
+
+    for (let key in values) {
+      const rawValue = values[key]
+      const transform = this.transforms[rawValue]
+      let value
+
+      if (this.transforms.hasOwnProperty(rawValue)) {
+        value = typeof transform === 'function' ? transform(rawValue) : transform
+      } else {
+        value = mysql.escape(rawValue)
+      }
+
+      newObj[key] = value
+    }
+
+    return newObj
+  }
+
+  createInsertValues (values) {
+    const valuesArray = []
+    const transformedValues = this.transformValues(values)
+
+    for (let key in transformedValues) {
+      const value = transformedValues[key]
+      valuesArray.push(`\`${key}\` = ${value}`)
+    }
+
+    return valuesArray.join()
   }
 
   sql (sql, ...args) {
@@ -103,7 +126,7 @@ class MySql {
   }
 
   insert (table, values = {}) {
-    const sql = `INSERT INTO \`${table}\` SET ${getInsertValues(values)}`
+    const sql = `INSERT INTO \`${table}\` SET ${this.createInsertValues(values)}`
 
     return new Promise((res, rej) => {
       this.sql(sql, (err, result, fields) => {
@@ -117,7 +140,7 @@ class MySql {
   }
 
   update (table, values, where) {
-    const sql = `UPDATE \`${table}\` SET ${getInsertValues(values)} ${sqlWhere(where)}`
+    const sql = `UPDATE \`${table}\` SET ${this.createInsertValues(values)} ${sqlWhere(where)}`
 
     return new Promise((res, rej) => {
       this.sql(sql, (err, result) => {

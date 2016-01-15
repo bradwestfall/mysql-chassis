@@ -64,6 +64,53 @@ describe('mysql-chassis', () => {
     })
   })
 
+  describe('createInsertValues method', () => {
+    const mysql = new MySql()
+
+    it('should create values string', () => {
+      expect(mysql.createInsertValues({
+        fields: 'name,date',
+        table: undefined,
+        field: 'id',
+        value: 1
+      })).to.equal("`fields` = 'name,date',`table` = NULL,`field` = 'id',`value` = 1")
+    })
+  })
+
+  describe('transformValues method', () => {
+    const mysql = new MySql({
+      transforms: {
+        undefined: 'NULL',
+        '': 'NULL',
+        user: v => `'${v.toUpperCase()}'`
+      }
+    })
+
+    it('should transform values according to options (String)', () => {
+      expect(mysql.transformValues({
+        fields: 'name,date',
+        table: 'log',
+        field: 'id',
+        value: ''
+      })).to.eql({
+        fields: "'name,date'",
+        table: "'log'",
+        field: "'id'",
+        value: 'NULL'
+      })
+    })
+
+    it('should transform values according to options (Function)', () => {
+      expect(mysql.transformValues({
+        fields: 'name,date',
+        table: 'user'
+      })).to.eql({
+        fields: "'name,date'",
+        table: "'USER'"
+      })
+    })
+  })
+
   describe('query method', () => {
     const mysql = new MySql()
     const query = sinon.stub()
