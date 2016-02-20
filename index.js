@@ -2,18 +2,6 @@ import mysql from 'mysql'
 import path from 'path'
 import fs from 'fs'
 
-const sqlWhere = where => {
-  if (!where) return
-
-  const whereArray = []
-
-  for (let key in where) {
-    whereArray.push('`' + key + '` = ' + mysql.escape(where[key]))
-  }
-
-  return 'WHERE ' + whereArray.join(' AND ')
-}
-
 const responseObj = {
   fieldCount: 0,
   affectedRows: 0,
@@ -30,72 +18,67 @@ class MySql {
     this.transforms = options.transforms || {}
   }
 
-  static queryFormat (query, values) {
-    if (!values) {
-      return query
-    }
-
-    return query.replace(/\:(\w+)/gm, (txt, key) =>
-      values.hasOwnProperty(key) ? mysql.escape(values[key]) : txt
-    )
+  /**
+   * Run a SELECT statement
+   * @param {string} sql
+   * @param {object} values - binding values
+   */
+  select(sql, values = {}) {
+    return this.query(sql, values).then(result => result.rows)
   }
 
-  transformValues (values) {
-    const newObj = {}
-
-    for (let key in values) {
-      const rawValue = values[key]
-      const transform = this.transforms[rawValue]
-      let value
-
-      if (this.transforms.hasOwnProperty(rawValue)) {
-        value = typeof transform === 'function' ? transform(rawValue) : transform
-      } else {
-        value = mysql.escape(rawValue)
-      }
-
-      newObj[key] = value
-    }
-
-    return newObj
+  /**
+   * Run a SELECT statement from a file
+   * @param {string} filename
+   * @param {object} values - binding values
+   */
+  selectFile(filename, values = {}) {
+    return this.queryFile(filename, values).then(result => result.rows)
   }
 
-  createInsertValues (values) {
-    const valuesArray = []
-    const transformedValues = this.transformValues(values)
-
-    for (let key in transformedValues) {
-      const value = transformedValues[key]
-      valuesArray.push(`\`${key}\` = ${value}`)
-    }
-
-    return valuesArray.join()
+  /**
+   * Build and run an INSERT statement
+   */
+  insert(table, values = {}) {
+    const sql = `INSERT INTO \`${table}\` SET ${this.createInsertValues(values)}`
+    return this.query(sql)
   }
 
-  sql (sql, ...args) {
-    let values
-
-    if (arguments.length > 2) {
-      [ values, ...args ] = args
-    }
-
-    this.connection.query(MySql.queryFormat(sql, values), ...args)
+  /**
+   * Build and run an UPDATE statement
+   */
+  update(table, values, where) {
+    const sql = `UPDATE \`${table}\` SET ${this.createInsertValues(values)} ${this.sqlWhere(where)}`
+    return this.query(sql)
   }
 
-  query (sql, values = {}) {
+  /**
+   * Build and run a DELETE statement
+   */
+  delete(table, where) {
+    const sql = `DELETE FROM \`${table}\` ${this.sqlWhere(where)}`
+    return this.query(sql)
+  }
+
+  /**
+   * Prepare and run a query with bound values. Return a promise
+   * @param {string} sql
+   * @param {object} values - binding values
+   */
+  query(sql, values = {}) {
     return new Promise((res, rej) => {
       this.sql(sql, values, (err, rows, fields = []) => {
         if (err) {
           rej(err)
         } else {
           // add rows directly if it's an array, otherwise assign them in
-          res(rows.length ? { ...responseObj, fields, rows } : { ...responseObj, fields, ...rows })
+          res(rows.length ? { ...responseObj, fields, rows, sql } : { ...responseObj, fields, ...rows, sql })
         }
       })
     })
   }
 
-  queryFile (filename, values = {}) {
+  queryFile(filename, values = {}) {
     // Get full path
     const filePath = path.resolve(path.join(
       this.sqlPath,
@@ -115,57 +98,91 @@ class MySql {
     })
   }
 
-  select () {
-    return this.query(...arguments)
-      .then(result => result.rows)
+  /**
+   * Pass SQL into node-mysql's `query` method
+   * @param {string} sql
+   * @param {object} [values] - binding values
+   * @param {function} - Callback required for node-mysql's `query`
+   */
+  sql(sql, ...args) {
+    let values
+
+    // Overloaded (has value argument)
+    if (arguments.length > 2) {
+      [ values, ...args ] = args
+    }
+
+    this.connection.query(MySql.queryFormat(sql, values), ...args)
   }
 
-  selectFile () {
-    return this.queryFile(...arguments)
-      .then(result => result.rows)
+  /****************************************
+    Helper Functions
+  *****************************************/
+
+  /**
+   * Turns `SELECT * FROM user WHERE user_id = :user_id`, into
+   *       `SELECT * FROM user WHERE user_id = 1`
+   */
+  static queryFormat(query, values) {
+    if (!values) return query
+
+    return query.replace(/\:(\w+)/gm, (txt, key) =>
+      values.hasOwnProperty(key) ? mysql.escape(values[key]) : txt
+    )
   }
 
-  insert (table, values = {}) {
-    const sql = `INSERT INTO \`${table}\` SET ${this.createInsertValues(values)}`
+  /**
+   * Turns {user_id: 1, age: 30}, into
+   *       "WHERE user_id = 1 AND age = 30"
+   */
+  sqlWhere(where) {
+    if (!where) return
+    if (typeof where === 'string') return where
 
-    return new Promise((res, rej) => {
-      this.sql(sql, (err, result, fields) => {
-        if (err) {
-          rej(err)
-        } else {
-          res(result)
-        }
-      })
-    })
+    const whereArray = []
+
+    for (let key in where) {
+      whereArray.push('`' + key + '` = ' + mysql.escape(where[key]))
+    }
+
+    return 'WHERE ' + whereArray.join(' AND ')
   }
 
-  update (table, values, where) {
-    const sql = `UPDATE \`${table}\` SET ${this.createInsertValues(values)} ${sqlWhere(where)}`
+  /**
+   * Turns 
+   */
+  createInsertValues(values) {
+    const valuesArray = []
+    const transformedValues = this.transformValues(values)
 
-    return new Promise((res, rej) => {
-      this.sql(sql, (err, result) => {
-        if (err) {
-          rej(err)
-        } else {
-          res(result)
-        }
-      })
-    })
+    for (let key in transformedValues) {
+      const value = transformedValues[key]
+      valuesArray.push(`\`${key}\` = ${value}`)
+    }
+
+    return valuesArray.join()
   }
 
-  delete (table, where) {
-    const sql = `DELETE FROM \`${table}\` ${sqlWhere(where)}`
+  transformValues(values) {
+    const newObj = {}
 
-    return new Promise((res, rej) => {
-      this.sql(sql, (err, result) => {
-        if (err) {
-          rej(err)
-        } else {
-          res(result)
-        }
-      })
-    })
+    for (let key in values) {
+      const rawValue = values[key]
+      const transform = this.transforms[rawValue]
+      let value
+
+      if (this.transforms.hasOwnProperty(rawValue)) {
+        value = typeof transform === 'function' ? transform(rawValue, values) : transform
+      } else {
+        value = mysql.escape(rawValue)
+      }
+
+      newObj[key] = value
+    }
+
+    return newObj
   }
+
 }
 
 export default MySql

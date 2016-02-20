@@ -251,8 +251,8 @@ FROM user`
     const sql = 'INSERT INTO `users` SET `1` = 1'
 
     query
-      .onFirstCall().callsArgWith(1, null, { insertId: 1 })
-      .onSecondCall().callsArgWith(1, 'TEST ERROR')
+      .onFirstCall().yields(null, { insertId: 1 })
+      .onSecondCall().yields('TEST ERROR')
 
     mysql.connection = { query }
 
