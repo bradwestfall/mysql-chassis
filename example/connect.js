@@ -7,15 +7,9 @@
 var MySql = require('../dist/mysql-chassis');
 
 var db = new MySql({
-  host: 'localhost',
   database: 'mysql-chassis',
-  user: 'root',
-  password: '',
-  transforms: {
-    undefined: 'NULL',
-    '': 'NULL',
-    'NOW()': 'NOW()'
-  }
+  user: 'root'
+  // Assuming other default options
 });
 
 module.exports = db;

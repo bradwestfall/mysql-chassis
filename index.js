@@ -11,11 +11,24 @@ const responseObj = {
   fields: []
 }
 
+const defaultConnectionOptions = {
+    host: 'localhost',
+    password: '',
+    sqlPath: path.join(__dirname, 'sql'),
+    transforms: {
+      undefined: 'NULL',
+      '': 'NULL',
+      'NOW()': 'NOW()',
+      'CURTIME()', 'CURTIME()'
+    }
+}
+
 class MySql {
-  constructor (options = { host: 'localhost' }) {
+  constructor (options) {
+    options = Object.assign({}, defaultConnectionOptions, options)
     this.connection = mysql.createConnection(options)
-    this.sqlPath = options.sqlPath || './sql'
-    this.transforms = options.transforms || {}
+    this.sqlPath = options.sqlPath
+    this.transforms = options.transforms
   }
 
   /**

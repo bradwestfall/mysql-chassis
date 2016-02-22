@@ -1,6 +1,6 @@
 # Node MySQL Chassis
 
-Node MySQL Chassis wraps [node-mysql](https://github.com/felixge/node-mysql) and provides a small abstraction layer to write SQL more easily. Note that I still have a lot of ideas and work to do here. It's in early release. This project will never turn into an ORM or a Model, but rather it would be a good fit for an ORM or Model to use. Contributions welcome.
+An promise-based API for [node-mysql](https://github.com/felixge/node-mysql) which also provides additional functionality and SQL creation methods
 
 ## Install
 
@@ -8,17 +8,22 @@ Node MySQL Chassis wraps [node-mysql](https://github.com/felixge/node-mysql) and
 npm install --save mysql-chassis
 ```
 
-## Initialize
+## Connect
 
 ```js
-var db = require('mysql-chassis');
+var MySQL = require('mysql-chassis');
 
-db.init({
+const db = new MySQL({
     host: 'localhost',         // optional, defaults to localhost
     database: 'databasename',
     user: 'username',
     password: '',
-    sqlPath: './sql'           // optional
+    sqlPath: './sql',          // optional
+    transforms: {
+      undefined: 'NULL',
+      '': 'NULL',
+      'NOW()': 'NOW()'
+    }
 });
 ```
 
