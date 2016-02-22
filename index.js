@@ -3,7 +3,6 @@ import path from 'path'
 import fs from 'fs'
 
 const responseObj = {
-  fieldCount: 0,
   affectedRows: 0,
   insertId: 0,
   changedRows: 0,
@@ -14,21 +13,24 @@ const responseObj = {
 const defaultConnectionOptions = {
     host: 'localhost',
     password: '',
-    sqlPath: path.join(__dirname, 'sql'),
+    sqlPath: './sql',
     transforms: {
       undefined: 'NULL',
       '': 'NULL',
       'NOW()': 'NOW()',
-      'CURTIME()', 'CURTIME()'
-    }
+      'CURTIME()': 'CURTIME()'
+    },
+    limitResults: false
 }
 
 class MySql {
   constructor (options) {
     options = Object.assign({}, defaultConnectionOptions, options)
     this.connection = mysql.createConnection(options)
-    this.sqlPath = options.sqlPath
-    this.transforms = options.transforms
+    this.settings = {}
+    this.settings.sqlPath = options.sqlPath
+    this.settings.transforms = options.transforms
+    this.settings.limitResults = options.limitResults
   }
 
   /**
@@ -95,7 +97,7 @@ class MySql {
   queryFile(filename, values = {}) {
     // Get full path
     const filePath = path.resolve(path.join(
-      this.sqlPath,
+      this.settings.sqlPath,
       filename + (path.extname(filename) === '.sql' ? '' : '.sql')
     ))
 
@@ -170,7 +172,7 @@ class MySql {
 
     for (let key in values) {
       const rawValue = values[key]
-      const transform = this.transforms[rawValue]
+      const transform = this.settings.transforms[rawValue]
       let value
 
       if (this.transforms.hasOwnProperty(rawValue)) {
@@ -186,7 +188,7 @@ class MySql {
   }
 
   limitResults(sql, rows) {
-    if (rows.length !== 1) return rows
+    if (rows.length !== 1 || !this.settings.limitResults) return rows
     return (sql.match(/^SELECT .+LIMIT 1$/g)) ? rows[0] : rows
   }
 

@@ -335,7 +335,9 @@ WHERE user_id = 1`
   })
 
   describe('limitResults method', () => {
-    const mysql = new MySql()
+    const mysql = new MySql({
+        limitResults: true
+    })
 
     it('should convert an array of results to just one result object', () => {
       expect(mysql.limitResults('SELECT * LIMIT 1', [{ 1: 1 }]))

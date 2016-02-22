@@ -9,7 +9,7 @@ var MySql = require('../dist/mysql-chassis');
 var db = new MySql({
   database: 'mysql-chassis',
   user: 'root'
-  // Assuming other default options
+  // Assuming other mysql-chassis and node-mysql default options
 });
 
 module.exports = db;
