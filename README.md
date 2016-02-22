@@ -16,8 +16,8 @@ var MySQLChassis = require('mysql-chassis');
 const db = new MySQLChassis({
     host: 'localhost',         // optional, defaults to localhost
     database: 'databasename',
-    user: 'username',
-    password: ''               // optional, defaults to empty string
+    user: 'username'
+    // Default password will be an empty string
 });
 ```
 
