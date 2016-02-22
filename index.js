@@ -7,7 +7,8 @@ const responseObj = {
   insertId: 0,
   changedRows: 0,
   rows: [],
-  fields: []
+  fields: [],
+  fieldCount: 0
 }
 
 const defaultConnectionOptions = {
@@ -175,7 +176,7 @@ class MySql {
       const transform = this.settings.transforms[rawValue]
       let value
 
-      if (this.transforms.hasOwnProperty(rawValue)) {
+      if (this.settings.transforms.hasOwnProperty(rawValue)) {
         value = typeof transform === 'function' ? transform(rawValue, values) : transform
       } else {
         value = mysql.escape(rawValue)

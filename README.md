@@ -57,8 +57,9 @@ The results object will contain the following properties:
 - `insertId`: Populated for certain queries, like `INSERT`
 - `changedRows`: Populated for certain queries, like `UPDATE`
 - `rows`: Populated for certain queries, like `SELECT`
-- `fields`: Field data as provided by `node-mysql`
 - `sql`: The SQL which was executed
+- `fields`: Field data as provided by `node-mysql`
+- `fieldCount`: Field Count data as provided by `node-mysql`
 
 For an error, the error object will contain the following properties:
 
@@ -229,6 +230,8 @@ If a string is passed in, the string will be returned without changes. This is b
 ```js
 db.update('user', updateValues, 'WHERE user.datetime_added < NOW()')
 ```
+
+<hr>
 
 ## Misc
 
