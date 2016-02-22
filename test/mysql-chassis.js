@@ -89,7 +89,8 @@ describe('mysql-chassis', () => {
     const mysql = new MySql({ sqlPath: './test' })
     const query = sinon.stub()
     const sql = `SELECT *
-FROM user`
+FROM user
+WHERE user_id = 1`
 
     query
       .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
@@ -98,14 +99,14 @@ FROM user`
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.selectFile('select', { table: 'user' })).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+      expect(mysql.selectFile('select', { user_id: 1 })).to.eventually.eql([{ 1: 1 }]).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
     })
 
     it('should reject promise with error when internal query method errors', done => {
-      expect(mysql.selectFile('select', { table: 'user' })).to.eventually.be.rejected.and.notify(done)
+      expect(mysql.selectFile('select', { user_id: 1 })).to.eventually.be.rejected.and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -220,7 +221,8 @@ FROM user`
     const mysql = new MySql({ sqlPath: './test' })
     const query = sinon.stub()
     const sql = `SELECT *
-FROM 'user'`
+FROM user
+WHERE user_id = 1`
 
     query
       .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
@@ -229,7 +231,7 @@ FROM 'user'`
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.queryFile('select', { table: 'user' })).to.eventually.eql({
+      expect(mysql.queryFile('select', { user_id: 1 })).to.eventually.eql({
         affectedRows: 0,
         changedRows: 0,
         fieldCount: 0,
