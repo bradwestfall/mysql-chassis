@@ -13,11 +13,10 @@ npm install --save mysql-chassis
 ```js
 var MySQLChassis = require('mysql-chassis');
 
+// The host default is "localhost" and the password default is an empty string
 const db = new MySQLChassis({
-    host: 'localhost',         // optional, defaults to localhost
     database: 'databasename',
     user: 'username'
-    // Default password will be an empty string
 });
 ```
 
