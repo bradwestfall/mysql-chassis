@@ -24,7 +24,7 @@ class MySql {
    * @param {object} values - binding values
    */
   select(sql, values = {}) {
-    return this.query(sql, values).then(result => result.rows)
+    return this.query(sql, values).then(result => this.limitResults(sql, result.rows))
   }
 
   /**
@@ -33,7 +33,7 @@ class MySql {
    * @param {object} values - binding values
    */
   selectFile(filename, values = {}) {
-    return this.queryFile(filename, values).then(result => result.rows)
+    return this.queryFile(filename, values).then(result => this.limitResults(sql, result.rows))
   }
 
   /**
@@ -68,9 +68,9 @@ class MySql {
   query(sql, values = {}) {
     return new Promise((res, rej) => {
       var finalSql = this.queryFormat(sql, values).trim()
-      this.connection.query(sql, (err, rows, fields = []) => {
+      this.connection.query(finalSql, (err, rows, fields = []) => {
         if (err) {
-          rej(err)
+          rej({err, sql: finalSql})
         } else {
           // add rows directly if it's an array, otherwise assign them in
           res(rows.length ? { ...responseObj, fields, rows, sql: finalSql } : { ...responseObj, fields, ...rows, sql: finalSql })
@@ -170,6 +170,12 @@ class MySql {
     }
 
     return newObj
+  }
+
+  limitResults(sql, rows) {
+    if (!rows.length) return rows
+    let limit = 'LIMIT 1'
+    return sql.substr(limit.length * -1).toUpperCase() === limit ? rows[0] : rows
   }
 
 }
