@@ -174,7 +174,7 @@ class MySql {
 
   limitResults(sql, rows) {
     if (rows.length !== 1) return rows
-    return (sql.match(/SELECT .+LIMIT 1/g)) ? rows[0] : rows
+    return (sql.match(/^SELECT .+LIMIT 1$/g)) ? rows[0] : rows
   }
 
 }
