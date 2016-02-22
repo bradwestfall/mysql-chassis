@@ -13,14 +13,6 @@ describe('mysql-chassis', () => {
       expect(mysql.connection).to.exist
     })
 
-    it('should have a query method', () => {
-      expect(mysql.query).to.exist
-    })
-
-    it('should have a queryFile method', () => {
-      expect(mysql.queryFile).to.exist
-    })
-
     it('should have a select method', () => {
       expect(mysql.select).to.exist
     })
@@ -40,149 +32,31 @@ describe('mysql-chassis', () => {
     it('should have a delete method', () => {
       expect(mysql.delete).to.exist
     })
-  })
 
-  describe('queryFormat static method', () => {
-    it('should allow named parameter binding with `:`', () => {
-      expect(MySql.queryFormat('SELECT :fields FROM :table WHERE :field = :value', {
-        fields: 'name,date',
-        table: 'user',
-        field: 'id',
-        value: 1
-      })).to.equal(`SELECT 'name,date' FROM 'user' WHERE 'id' = 1`)
+    it('should have a query method', () => {
+      expect(mysql.query).to.exist
     })
 
-    it('should allow named parameter binding with `:` in multiline queries', () => {
-      expect(MySql.queryFormat(`SELECT :fields FROM :table
-        WHERE :field = :value`, {
-        fields: 'name,date',
-        table: 'user',
-        field: 'id',
-        value: 1
-      })).to.equal(`SELECT 'name,date' FROM 'user'
-        WHERE 'id' = 1`)
-    })
-  })
-
-  describe('createInsertValues method', () => {
-    const mysql = new MySql()
-
-    it('should create values string', () => {
-      expect(mysql.createInsertValues({
-        fields: 'name,date',
-        table: undefined,
-        field: 'id',
-        value: 1
-      })).to.equal("`fields` = 'name,date',`table` = NULL,`field` = 'id',`value` = 1")
-    })
-  })
-
-  describe('transformValues method', () => {
-    const mysql = new MySql({
-      transforms: {
-        undefined: 'NULL',
-        '': 'NULL',
-        user: v => `'${v.toUpperCase()}'`
-      }
+    it('should have a queryFile method', () => {
+      expect(mysql.queryFile).to.exist
     })
 
-    it('should transform values according to options (String)', () => {
-      expect(mysql.transformValues({
-        fields: 'name,date',
-        table: 'log',
-        field: 'id',
-        value: ''
-      })).to.eql({
-        fields: "'name,date'",
-        table: "'log'",
-        field: "'id'",
-        value: 'NULL'
-      })
+    it('should have a queryFormat method', () => {
+      expect(mysql.queryFormat).to.exist
     })
 
-    it('should transform values according to options (Function)', () => {
-      expect(mysql.transformValues({
-        fields: 'name,date',
-        table: 'user'
-      })).to.eql({
-        fields: "'name,date'",
-        table: "'USER'"
-      })
-    })
-  })
-
-  describe('query method', () => {
-    const mysql = new MySql()
-    const query = sinon.stub()
-    const sql = 'SELECT 1'
-
-    query
-      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
-      .onSecondCall().callsArgWith(1, 'TEST ERROR')
-
-    mysql.connection = { query }
-
-    it('should call internal query method', done => {
-      expect(mysql.query(sql)).to.eventually.eql({
-        affectedRows: 0,
-        changedRows: 0,
-        fieldCount: 0,
-        insertId: 0,
-        fields: [],
-        rows: [{ 1: 1 }]
-      }).and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.been.calledWith(sql)
-        })
+    it('should have a sqlWhere method', () => {
+      expect(mysql.sqlWhere).to.exist
     })
 
-    it('should reject promise with error when internal query method errors', done => {
-      expect(mysql.query(sql)).to.eventually.be.rejected.and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.been.calledWith(sql)
-        })
-    })
-  })
-
-  describe('queryFile method', () => {
-    const mysql = new MySql({ sqlPath: './test' })
-    const query = sinon.stub()
-    const sql = `SELECT *
-FROM user`
-
-    query
-      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
-      .onSecondCall().callsArgWith(1, 'TEST ERROR')
-
-    mysql.connection = { query }
-
-    it('should call internal query method', done => {
-      expect(mysql.queryFile('select', { table: 'user' })).to.eventually.eql({
-        affectedRows: 0,
-        changedRows: 0,
-        fieldCount: 0,
-        insertId: 0,
-        fields: [],
-        rows: [{ 1: 1 }]
-      }).and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.been.calledWith(sql)
-        })
+    it('should have a createInsertValues method', () => {
+      expect(mysql.createInsertValues).to.exist
     })
 
-    it('should reject promise with error when internal query method errors', done => {
-      expect(mysql.queryFile('select', { table: 'user' })).to.eventually.be.rejected.and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.been.calledWith(sql)
-        })
+    it('should have a transformValues method', () => {
+      expect(mysql.transformValues).to.exist
     })
 
-    it('should reject promise with error when file does not exist', done => {
-      expect(mysql.queryFile('DOES_NOT_EXIST')).to.eventually.be.rejected.and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.not.been.called
-        })
-    })
   })
 
   describe('select method', () => {
@@ -247,79 +121,211 @@ FROM user`
 
   describe('insert method', () => {
     const mysql = new MySql()
-    const query = sinon.stub()
-    const sql = 'INSERT INTO `users` SET `1` = 1'
 
-    query
-      .onFirstCall().yields(null, { insertId: 1 })
-      .onSecondCall().yields('TEST ERROR')
-
-    mysql.connection = { query }
-
+    mysql.query = function() {
+        return Promise.resolve({ insertId: 1 })
+    }
+    
     it('should call internal query method', done => {
-      expect(mysql.insert('users', { 1: 1 })).to.eventually.eql({ insertId: 1 }).and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.been.calledWith(sql)
-        })
+      expect(mysql.insert('table', { 1: 1 })).to.eventually.eql({ insertId: 1 }).and.notify(done)
     })
+
+    mysql.query = function() {
+        return Promise.reject()
+    }
 
     it('should reject promise with error when internal query method errors', done => {
-      expect(mysql.insert('users', { 1: 1 })).to.eventually.be.rejected.and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.not.been.calledWith(sql)
-        })
+      expect(mysql.insert('table', { 1: 1 })).to.eventually.be.rejected.and.notify(done)
     })
+
   })
 
   describe('update method', () => {
     const mysql = new MySql()
-    const query = sinon.stub()
-    const sql = 'UPDATE `users` SET `1` = 1 WHERE `1` = 1'
 
-    query
-      .onFirstCall().callsArgWith(1, null, { affectedRows: 1 })
-      .onSecondCall().callsArgWith(1, 'TEST ERROR')
-
-    mysql.connection = { query }
-
+    mysql.query = function() {
+        return Promise.resolve({ changedRows: 1 })
+    }
+    
     it('should call internal query method', done => {
-      expect(mysql.update('users', { 1: 1 }, { 1: 1 })).to.eventually.eql({ affectedRows: 1 }).and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.been.calledWith(sql)
-        })
+      expect(mysql.update('table', { 1: 1 }, { 1: 1 })).to.eventually.eql({ changedRows: 1 }).and.notify(done)
     })
+
+    mysql.query = function() {
+        return Promise.reject()
+    }
 
     it('should reject promise with error when internal query method errors', done => {
-      expect(mysql.update('users', { 1: 1 }, { 1: 1 })).to.eventually.be.rejected.and.notify(done)
-        .then(() => {
-          expect(mysql.connection.query).to.have.been.calledWith(sql)
-        })
+      expect(mysql.update('table', { 1: 1 }, { 1: 1 })).to.eventually.be.rejected.and.notify(done)
     })
+
   })
 
   describe('delete method', () => {
     const mysql = new MySql()
+
+    mysql.query = function() {
+        return Promise.resolve({ affectedRows: 1 })
+    }
+    
+    it('should call internal query method', done => {
+      expect(mysql.delete('table', { 1: 1 }, { 1: 1 })).to.eventually.eql({ affectedRows: 1 }).and.notify(done)
+    })
+
+    mysql.query = function() {
+        return Promise.reject()
+    }
+
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.delete('table', { 1: 1 }, { 1: 1 })).to.eventually.be.rejected.and.notify(done)
+    })
+
+  })
+
+  describe('query method', () => {
+    const mysql = new MySql()
     const query = sinon.stub()
-    sql = 'DELETE FROM `users` WHERE `1` = 1'
+    const sql = 'SELECT 1'
 
     query
-      .onFirstCall().callsArgWith(1, null, { affectedRows: 1 })
+      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
       .onSecondCall().callsArgWith(1, 'TEST ERROR')
 
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.delete('users', { 1: 1 })).to.eventually.eql({ affectedRows: 1 }).and.notify(done)
+      expect(mysql.query(sql)).to.eventually.eql({
+        affectedRows: 0,
+        changedRows: 0,
+        fieldCount: 0,
+        insertId: 0,
+        fields: [],
+        rows: [{ 1: 1 }],
+        sql: "SELECT 1"
+      }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
     })
 
     it('should reject promise with error when internal query method errors', done => {
-      expect(mysql.delete('users', { 1: 1 })).to.eventually.be.rejected.and.notify(done)
+      expect(mysql.query(sql)).to.eventually.be.rejected.and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
     })
   })
+
+  describe('queryFile method', () => {
+    const mysql = new MySql({ sqlPath: './test' })
+    const query = sinon.stub()
+    const sql = `SELECT *
+FROM 'user'`
+
+    query
+      .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
+      .onSecondCall().callsArgWith(1, 'TEST ERROR')
+
+    mysql.connection = { query }
+
+    it('should call internal query method', done => {
+      expect(mysql.queryFile('select', { table: 'user' })).to.eventually.eql({
+        affectedRows: 0,
+        changedRows: 0,
+        fieldCount: 0,
+        insertId: 0,
+        fields: [],
+        rows: [{ 1: 1 }],
+        sql: sql
+      }).and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
+    })
+
+    it('should reject promise with error when internal query method errors', done => {
+      expect(mysql.queryFile('select', { table: 'user' })).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.been.calledWith(sql)
+        })
+    })
+
+    it('should reject promise with error when file does not exist', done => {
+      expect(mysql.queryFile('DOES_NOT_EXIST')).to.eventually.be.rejected.and.notify(done)
+        .then(() => {
+          expect(mysql.connection.query).to.have.not.been.called
+        })
+    })
+  })
+
+  describe('queryFormat method', () => {
+    const mysql = new MySql()
+    it('should allow named parameter binding with `:`', () => {
+      expect(mysql.queryFormat('SELECT :fields FROM :table WHERE :field = :value', {
+        fields: 'name,date',
+        table: 'user',
+        field: 'id',
+        value: 1
+      })).to.equal(`SELECT 'name,date' FROM 'user' WHERE 'id' = 1`)
+    })
+
+    it('should allow named parameter binding with `:` in multiline queries', () => {
+      expect(mysql.queryFormat(`SELECT :fields FROM :table
+        WHERE :field = :value`, {
+        fields: 'name,date',
+        table: 'user',
+        field: 'id',
+        value: 1
+      })).to.equal(`SELECT 'name,date' FROM 'user'
+        WHERE 'id' = 1`)
+    })
+  })
+
+  describe('createInsertValues method', () => {
+    const mysql = new MySql()
+
+    it('should create values string', () => {
+      expect(mysql.createInsertValues({
+        fields: 'name,date',
+        table: undefined,
+        field: 'id',
+        value: 1
+      })).to.equal("`fields` = 'name,date',`table` = NULL,`field` = 'id',`value` = 1")
+    })
+  })
+
+  describe('transformValues method', () => {
+    const mysql = new MySql({
+      transforms: {
+        undefined: 'NULL',
+        '': 'NULL',
+        user: v => `'${v.toUpperCase()}'`
+      }
+    })
+
+    it('should transform values according to options (String)', () => {
+      expect(mysql.transformValues({
+        fields: 'name,date',
+        table: 'log',
+        field: 'id',
+        value: ''
+      })).to.eql({
+        fields: "'name,date'",
+        table: "'log'",
+        field: "'id'",
+        value: 'NULL'
+      })
+    })
+
+    it('should transform values according to options (Function)', () => {
+      expect(mysql.transformValues({
+        fields: 'name,date',
+        table: 'user'
+      })).to.eql({
+        fields: "'name,date'",
+        table: "'USER'"
+      })
+    })
+  })
+
 })

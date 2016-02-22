@@ -67,12 +67,13 @@ class MySql {
    */
   query(sql, values = {}) {
     return new Promise((res, rej) => {
-      this.sql(sql, values, (err, rows, fields = []) => {
+      var finalSql = this.queryFormat(sql, values).trim()
+      this.connection.query(sql, (err, rows, fields = []) => {
         if (err) {
           rej(err)
         } else {
           // add rows directly if it's an array, otherwise assign them in
-          res(rows.length ? { ...responseObj, fields, rows, sql } : { ...responseObj, fields, ...rows, sql })
+          res(rows.length ? { ...responseObj, fields, rows, sql: finalSql } : { ...responseObj, fields, ...rows, sql: finalSql })
         }
       })
     })
@@ -91,28 +92,11 @@ class MySql {
         if (err) {
           rej('Cannot find: ' + err.path)
         } else {
-          sql = sql.replace(/\n*$/m, ' ').replace(/ $/, '')
+          sql = sql.trim()
           this.query(sql, values).then(res).catch(rej)
         }
       })
     })
-  }
-
-  /**
-   * Pass SQL into node-mysql's `query` method
-   * @param {string} sql
-   * @param {object} [values] - binding values
-   * @param {function} - Callback required for node-mysql's `query`
-   */
-  sql(sql, ...args) {
-    let values
-
-    // Overloaded (has value argument)
-    if (arguments.length > 2) {
-      [ values, ...args ] = args
-    }
-
-    this.connection.query(MySql.queryFormat(sql, values), ...args)
   }
 
   /****************************************
@@ -123,7 +107,7 @@ class MySql {
    * Turns `SELECT * FROM user WHERE user_id = :user_id`, into
    *       `SELECT * FROM user WHERE user_id = 1`
    */
-  static queryFormat(query, values) {
+  queryFormat(query, values) {
     if (!values) return query
 
     return query.replace(/\:(\w+)/gm, (txt, key) =>
@@ -149,7 +133,8 @@ class MySql {
   }
 
   /**
-   * Turns 
+   * Turns {first_name: 'Brad', last_name: 'Westfall'}, into
+   *       `first_name` = 'Brad', `last_name` = 'Westfall'
    */
   createInsertValues(values) {
     const valuesArray = []
@@ -163,6 +148,10 @@ class MySql {
     return valuesArray.join()
   }
 
+  /**
+   * If the values of the "values" argument match the keys of the this.transforms
+   * object, then use the transforms value instead of the supplied value
+   */
   transformValues(values) {
     const newObj = {}
 
