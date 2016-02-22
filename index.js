@@ -26,7 +26,7 @@ const defaultConnectionOptions = {
 
 class MySql {
   constructor (options) {
-    options = Object.assign({}, defaultConnectionOptions, options)
+    options = {...defaultConnectionOptions, ...options}
     this.connection = mysql.createConnection(options)
     this.settings = {}
     this.settings.sqlPath = options.sqlPath
