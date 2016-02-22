@@ -57,6 +57,10 @@ describe('mysql-chassis', () => {
       expect(mysql.transformValues).to.exist
     })
 
+    it('should have a limitResults method', () => {
+      expect(mysql.limitResults).to.exist
+    })
+
   })
 
   describe('select method', () => {
@@ -328,6 +332,31 @@ WHERE user_id = 1`
         table: "'USER'"
       })
     })
+  })
+
+  describe('limitResults method', () => {
+    const mysql = new MySql()
+
+    it('should convert an array of results to just one result object', () => {
+      expect(mysql.limitResults('SELECT * LIMIT 1', [{ 1: 1 }]))
+        .to.eql({ 1: 1 })
+    })
+
+    it('should return the original results since there are more than one', () => {
+      expect(mysql.limitResults('SELECT * LIMIT 1', [{ 1: 1 }, { 1: 1 }]))
+        .to.eql([{ 1: 1 }, { 1: 1 }])
+    })
+
+    it('should return the original results since LIMIT 1 is missing', () => {
+      expect(mysql.limitResults('SELECT *', [{ 1: 1 }]))
+        .to.eql([{ 1: 1 }])
+    })
+
+    it('should return the original results since SELECT is missing', () => {
+      expect(mysql.limitResults('LIMIT 1', [{ 1: 1 }]))
+        .to.eql([{ 1: 1 }])
+    })
+
   })
 
 })
