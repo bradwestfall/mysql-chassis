@@ -20,8 +20,7 @@ const defaultConnectionOptions = {
       '': 'NULL',
       'NOW()': 'NOW()',
       'CURTIME()': 'CURTIME()'
-    },
-    limitResults: false
+    }
 }
 
 class MySql {
@@ -31,7 +30,10 @@ class MySql {
     this.settings = {}
     this.settings.sqlPath = options.sqlPath
     this.settings.transforms = options.transforms
-    this.settings.limitResults = options.limitResults
+    this.middleware = {
+        'ON_BEFORE_QUERY': [],
+        'ON_RESULTS': []
+    }
   }
 
   /**
@@ -83,12 +85,20 @@ class MySql {
    */
   query(sql, values = {}) {
     return new Promise((res, rej) => {
+
+      // Apply Middleware
+      [sql, values] = this.applyMiddleware('ON_BEFORE_QUERY', sql, values)
+
       var finalSql = this.queryFormat(sql, values).trim()
+
       this.connection.query(finalSql, (err, rows, fields = []) => {
         if (err) {
           rej({err, sql: finalSql})
         } else {
-          rows = this.limitResults(finalSql, rows)
+
+          // Apply Middleware
+          [sql, rows] = this.applyMiddleware('ON_RESULTS', sql, rows)
+
           res({ ...responseObj, fields, rows, sql: finalSql })
         }
       })
@@ -188,9 +198,23 @@ class MySql {
     return newObj
   }
 
-  limitResults(sql, rows) {
-    if (rows.length !== 1 || !this.settings.limitResults) return rows
-    return (sql.match(/^SELECT .+LIMIT 1$/g)) ? rows[0] : rows
+  /****************************************
+    Middleware
+  *****************************************/
+
+  use(type, middleware) {
+    if (typeof middleware !== 'function') return
+    const typeArray = this.middleware[type.toUpperCase()]
+    if (!typeArray) return
+    typeArray.push(middleware)
+  }
+
+  applyMiddleware(type, ...args) {
+    const typeArray = this.middleware[type.toUpperCase()]
+    typeArray.forEach(function(middleware) {
+      args = middleware(args)
+    })
+    return args
   }
 
 }

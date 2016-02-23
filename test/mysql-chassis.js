@@ -57,10 +57,6 @@ describe('mysql-chassis', () => {
       expect(mysql.transformValues).to.exist
     })
 
-    it('should have a limitResults method', () => {
-      expect(mysql.limitResults).to.exist
-    })
-
   })
 
   describe('select method', () => {
@@ -334,29 +330,39 @@ WHERE user_id = 1`
     })
   })
 
-  describe('limitResults method', () => {
-    const mysql = new MySql({
-        limitResults: true
+  describe('use method', () => {
+    const mysql = new MySql()
+    const middleware = function() {}
+
+    mysql.use('ON_BEFORE_QUERY', middleware)
+
+    it('should create middleware for ON_BEFORE_QUERY', () => {
+      expect(mysql.middleware.ON_BEFORE_QUERY[0]).to.equal(middleware)
     })
 
-    it('should convert an array of results to just one result object', () => {
-      expect(mysql.limitResults('SELECT * LIMIT 1', [{ 1: 1 }]))
-        .to.eql({ 1: 1 })
+    mysql.use('ON_RESULTS', middleware)
+
+    it('should create a middleare for ON_RESULTS', () => {
+      expect(mysql.middleware.ON_RESULTS[0]).to.equal(middleware)
     })
 
-    it('should return the original results since there are more than one', () => {
-      expect(mysql.limitResults('SELECT * LIMIT 1', [{ 1: 1 }, { 1: 1 }]))
-        .to.eql([{ 1: 1 }, { 1: 1 }])
+    // Middleware should be a function
+    mysql.use('ON_RESULTS', null)
+
+    it('should not create middlware', () => {
+      expect(mysql.middleware.ON_RESULTS[1]).to.be.undefinded
     })
 
-    it('should return the original results since LIMIT 1 is missing', () => {
-      expect(mysql.limitResults('SELECT *', [{ 1: 1 }]))
-        .to.eql([{ 1: 1 }])
-    })
+  })
 
-    it('should return the original results since SELECT is missing', () => {
-      expect(mysql.limitResults('LIMIT 1', [{ 1: 1 }]))
-        .to.eql([{ 1: 1 }])
+  describe('applyMiddleware method', () => {
+    const mysql = new MySql()
+    
+    const middleware = args => args
+    mysql.use('ON_BEFORE_QUERY', middleware)
+
+    it('should apply the middlware correctly', () => {
+      expect(mysql.applyMiddleware('ON_BEFORE_QUERY', 1, 2)).to.eql([1, 2])
     })
 
   })
