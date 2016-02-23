@@ -1,6 +1,6 @@
 # Node MySQL Chassis
 
-An promise-based API for [node-mysql](https://github.com/felixge/node-mysql) which also provides additional functionality and SQL creation methods
+A promise-based API for [node-mysql](https://github.com/felixge/node-mysql) which also provides additional functionality and SQL creation methods
 
 ## Install
 
