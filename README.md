@@ -34,7 +34,6 @@ The following connection options are in addition to anything `node-mysql` allows
 - `sqlPath`: A filepath where SQL files can be found. This is used by `selectFile()` and `queryFile()`. If no value is passed, it defaults to `./sql`
 - `transforms`: An object for transform settings. See [Transforms](#transforms) below
 - `password`: While this is required by `node-mysql`, if not provided, a default of an empty string will be passed into `node-mysql` for you
-- `limitResults`: Defaulted to `false`, this feature allows `SELECT` statements with `LIMIT 1` at the end to return only an object instead of an array with one object. [See more details](#limitresults)
 
 ## Results
 

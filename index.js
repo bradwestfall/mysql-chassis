@@ -26,10 +26,9 @@ const defaultConnectionOptions = {
 class MySql {
   constructor (options) {
     options = {...defaultConnectionOptions, ...options}
-    this.connection = mysql.createConnection(options)
-    this.settings = {}
-    this.settings.sqlPath = options.sqlPath
-    this.settings.transforms = options.transforms
+    const {sqlPath, transforms, ...connectionOptions} = options
+    this.connection = mysql.createConnection(connectionOptions)
+    this.settings = {sqlPath, transforms}
     this.middleware = {
         'ON_BEFORE_QUERY': [],
         'ON_RESULTS': []
