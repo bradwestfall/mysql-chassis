@@ -231,12 +231,47 @@ db.update('user', updateValues, 'WHERE user.datetime_added < NOW()')
 
 <hr>
 
+## Middleware
+
+You can add middleware to be applied `ON_BEFORE_QUERY` or `ON_RESULTS` by using the `use()` method:
+
+```js
+db.use('ON_BEFORE_QUERY', function(args) {
+    // Do middleware things, then...
+    return args
+})
+
+db.use('ON_RESULTS', function(args) {
+    // Do middleware things, then...
+    return args
+})
+```
+
+- `ON_BEFORE_QUERY` middleware will receive `args` which will be an array: `[sql, values]`. `sql` will be the un-altered version of the SQL statement (before variable binding). `ON_BEFORE_QUERY` middleware should return a similar array (`[sql, values]`, altered if you wish).
+
+- `ON_RESULTS` middleware will receive `args` which will be an array: `[sql, rows]`. `sql` will be the altered version of the SQL statement (after variable binding). `ON_RESULTS` middleware should return a similar array (`[sql, rows]`, altered if you wish).
+
+### Example: Better Results For `LIMIT 1`
+
+This is an example of how middleware works. Note that this middleware is not apart of the source code and you must apply if separately if you need it.
+
+This middleware seeks an SQL `SELECT` statement ending with `LIMIT 1`. If it matches, it will alter the `rows` variable returned to be a single object instead of being an array of that single object. This makes the API nicer to use when the developer knows they're expecting one result (because of `LIMIT 1`)
+
+```js
+db.use('ON_RESULTS', function(args) {
+    var sql = args[0]
+    var rows = args[1]
+
+    if (rows.length !== 1) return args
+    return (sql.match(/^SELECT .+LIMIT 1$/g)) ? [sql, rows[0]] : args
+})
+
+```
+
+<hr>
+
 ## Misc
 
 ### transforms
-
-- Coming Soon
-
-### limitResults
 
 - Coming Soon
