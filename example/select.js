@@ -6,7 +6,11 @@ var db = require('./connect');
  * that the SQL statement starts with SELECT and ends with LIMIT 1.
  * The idea being that if we write our query with LIMIT 1 at the
  * end, why should we have to deal with receiving an array with
- * our one row? Why not just receive the row object. 
+ * our one row? Why not just receive the row object.
+ *
+ * This is an example of how you _can_ write middleware, this 
+ * particular one isn't built into MySQLChassis so you would
+ * have to implement this on your own 
  */
 
 db.use('ON_RESULTS', function(args) {
