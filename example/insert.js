@@ -4,10 +4,10 @@ var insertValues = {first_name: 'Brad', last_name: 'Westfall', datetime_added: '
 
 db.insert('user', insertValues)
   .then(function(response) {
-    console.log(response)
+    console.log('INSERT Response:', response)
   })
   .catch(function(error) {
-    console.log(error)
+    console.log('INSERT Error:', error)
   });
 
 // Wait then close the connection to MySQL

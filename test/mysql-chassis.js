@@ -126,7 +126,7 @@ WHERE user_id = 1`
     mysql.query = function() {
         return Promise.resolve({ insertId: 1 })
     }
-    
+
     it('should call internal query method', done => {
       expect(mysql.insert('table', { 1: 1 })).to.eventually.eql({ insertId: 1 }).and.notify(done)
     })
@@ -147,7 +147,7 @@ WHERE user_id = 1`
     mysql.query = function() {
         return Promise.resolve({ changedRows: 1 })
     }
-    
+
     it('should call internal query method', done => {
       expect(mysql.update('table', { 1: 1 }, { 1: 1 })).to.eventually.eql({ changedRows: 1 }).and.notify(done)
     })
@@ -168,7 +168,7 @@ WHERE user_id = 1`
     mysql.query = function() {
         return Promise.resolve({ affectedRows: 1 })
     }
-    
+
     it('should call internal query method', done => {
       expect(mysql.delete('table', { 1: 1 }, { 1: 1 })).to.eventually.eql({ affectedRows: 1 }).and.notify(done)
     })
@@ -196,13 +196,7 @@ WHERE user_id = 1`
 
     it('should call internal query method', done => {
       expect(mysql.query(sql)).to.eventually.eql({
-        affectedRows: 0,
-        changedRows: 0,
-        fieldCount: 0,
-        insertId: 0,
-        fields: [],
-        rows: [{ 1: 1 }],
-        sql: "SELECT 1"
+        rows: [{ 1: 1 }]
       }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
@@ -232,13 +226,7 @@ WHERE user_id = 1`
 
     it('should call internal query method', done => {
       expect(mysql.queryFile('select', { user_id: 1 })).to.eventually.eql({
-        affectedRows: 0,
-        changedRows: 0,
-        fieldCount: 0,
-        insertId: 0,
-        fields: [],
-        rows: [{ 1: 1 }],
-        sql: sql
+        rows: [{ 1: 1 }]
       }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
@@ -357,7 +345,7 @@ WHERE user_id = 1`
 
   describe('applyMiddleware method', () => {
     const mysql = new MySql()
-    
+
     const middleware = args => args
     mysql.use('ON_BEFORE_QUERY', middleware)
 

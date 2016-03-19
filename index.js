@@ -6,8 +6,6 @@ const responseObj = {
   affectedRows: 0,
   insertId: 0,
   changedRows: 0,
-  rows: [],
-  fields: [],
   fieldCount: 0
 }
 
@@ -88,23 +86,34 @@ class MySql {
       // Apply Middleware
       [sql, values] = this.applyMiddleware('ON_BEFORE_QUERY', sql, values)
 
-      var finalSql = this.queryFormat(sql, values).trim()
+      let finalSql = this.queryFormat(sql, values).trim()
 
-      this.connection.query(finalSql, (err, rows, fields = []) => {
+      this.connection.query(finalSql, (err, results) => {
         if (err) {
           rej({err, sql: finalSql})
         } else {
 
           // Apply Middleware
-          [sql, rows] = this.applyMiddleware('ON_RESULTS', sql, rows)
+          [sql, results] = this.applyMiddleware('ON_RESULTS', sql, results)
 
-          res({ ...responseObj, fields, rows, sql: finalSql })
+          // If is SELECT
+          if (this.isSelect(finalSql)) {
+
+            // Results is rows in the case of SELECT statements
+            res({ rows: results})
+
+          } else {
+            res({ ...responseObj, ...results, sql: finalSql })
+
+          }
+
         }
       })
     })
   }
 
   queryFile(filename, values = {}) {
+
     // Get full path
     const filePath = path.resolve(path.join(
       this.settings.sqlPath,
@@ -196,6 +205,12 @@ class MySql {
 
     return newObj
   }
+
+  isSelect(sql) {
+    sql = sql.trim().toUpperCase()
+    return sql.match(/^SELECT/)
+  }
+
 
   /****************************************
     Middleware
