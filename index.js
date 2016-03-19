@@ -39,7 +39,7 @@ class MySql {
    * @param {object} values - binding values
    */
   select(sql, values = {}) {
-    return this.query(sql, values).then(result => result.rows)
+    return this.query(sql, values) //.then(result => result.rows)
   }
 
   /**
@@ -48,7 +48,7 @@ class MySql {
    * @param {object} values - binding values
    */
   selectFile(filename, values = {}) {
-    return this.queryFile(filename, values).then(result => result.rows)
+    return this.queryFile(filename, values) //.then(result => result.rows)
   }
 
   /**
@@ -88,7 +88,7 @@ class MySql {
 
       let finalSql = this.queryFormat(sql, values).trim()
 
-      this.connection.query(finalSql, (err, results) => {
+      this.connection.query(finalSql, (err, results, fields) => {
         if (err) {
           rej({err, sql: finalSql})
         } else {
@@ -96,15 +96,14 @@ class MySql {
           // Apply Middleware
           [sql, results] = this.applyMiddleware('ON_RESULTS', sql, results)
 
-          // If is SELECT
+          // If sql is SELECT
           if (this.isSelect(finalSql)) {
 
             // Results is rows in the case of SELECT statements
-            res({ rows: results})
+            res({ rows: results, fields, sql: finalSql})
 
           } else {
             res({ ...responseObj, ...results, sql: finalSql })
-
           }
 
         }

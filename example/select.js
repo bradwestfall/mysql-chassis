@@ -28,8 +28,8 @@ db.use('ON_RESULTS', function(args) {
 var bindValues = {id: 1}
 
 db.select('SELECT * FROM user WHERE user_id = :id LIMIT 1', bindValues)
-  .then(function(row) {
-    console.log('SELECT Row: ', row)
+  .then(function(results) {
+    console.log('SELECT results: ', results)
   })
   .catch(function(error) {
     console.error('SELECT Error: ', error)

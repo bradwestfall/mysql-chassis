@@ -62,7 +62,7 @@ describe('mysql-chassis', () => {
   describe('select method', () => {
     const mysql = new MySql()
     const query = sinon.stub()
-    const sql = 'SELECT 1'
+    const sql = 'SELECT * FROM user WHERE user_id = :user_id'
 
     query
       .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
@@ -71,7 +71,12 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.select(sql)).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+      expect(mysql.select(sql, { user_id: 1 })).to.eventually.eql({
+          rows: [{ 1: 1 }],
+          fields: undefined,
+          sql: 'SELECT * FROM user WHERE user_id = 1'
+        })
+        .and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -88,9 +93,6 @@ describe('mysql-chassis', () => {
   describe('selectFile method', () => {
     const mysql = new MySql({ sqlPath: './test' })
     const query = sinon.stub()
-    const sql = `SELECT *
-FROM user
-WHERE user_id = 1`
 
     query
       .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
@@ -99,7 +101,12 @@ WHERE user_id = 1`
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.selectFile('select', { user_id: 1 })).to.eventually.eql([{ 1: 1 }]).and.notify(done)
+      expect(mysql.selectFile('select', { user_id: 1 })).to.eventually.eql({
+          rows: [{ 1: 1 }],
+          fields: undefined,
+          sql: 'SELECT * FROM user WHERE user_id = 1'
+        })
+        .and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
         })
@@ -186,7 +193,7 @@ WHERE user_id = 1`
   describe('query method', () => {
     const mysql = new MySql()
     const query = sinon.stub()
-    const sql = 'SELECT 1'
+    const sql = 'SELECT * FROM user WHERE user_id = :user_id'
 
     query
       .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
@@ -195,8 +202,10 @@ WHERE user_id = 1`
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.query(sql)).to.eventually.eql({
-        rows: [{ 1: 1 }]
+      expect(mysql.query(sql, {user_id: 1})).to.eventually.eql({
+        rows: [{ 1: 1 }],
+        fields: undefined,
+        sql: 'SELECT * FROM user WHERE user_id = 1'
       }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
@@ -214,9 +223,6 @@ WHERE user_id = 1`
   describe('queryFile method', () => {
     const mysql = new MySql({ sqlPath: './test' })
     const query = sinon.stub()
-    const sql = `SELECT *
-FROM user
-WHERE user_id = 1`
 
     query
       .onFirstCall().callsArgWith(1, null, [{ 1: 1 }])
@@ -226,7 +232,9 @@ WHERE user_id = 1`
 
     it('should call internal query method', done => {
       expect(mysql.queryFile('select', { user_id: 1 })).to.eventually.eql({
-        rows: [{ 1: 1 }]
+        rows: [{ 1: 1 }],
+        fields: undefined,
+        sql: 'SELECT * FROM user WHERE user_id = 1'
       }).and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
