@@ -2,13 +2,6 @@ import mysql from 'mysql'
 import path from 'path'
 import fs from 'fs'
 
-const responseObj = {
-  affectedRows: 0,
-  insertId: 0,
-  changedRows: 0,
-  fieldCount: 0
-}
-
 const defaultConnectionOptions = {
     host: 'localhost',
     password: '',
@@ -39,7 +32,7 @@ class MySql {
    * @param {object} values - binding values
    */
   select(sql, values = {}) {
-    return this.query(sql, values) //.then(result => result.rows)
+    return this.query(sql, values).then(results => results.rows)
   }
 
   /**
@@ -48,7 +41,7 @@ class MySql {
    * @param {object} values - binding values
    */
   selectFile(filename, values = {}) {
-    return this.queryFile(filename, values) //.then(result => result.rows)
+    return this.queryFile(filename, values).then(results => results.rows)
   }
 
   /**
@@ -103,7 +96,7 @@ class MySql {
             res({ rows: results, fields, sql: finalSql})
 
           } else {
-            res({ ...responseObj, ...results, sql: finalSql })
+            res({ ...results, sql: finalSql })
           }
 
         }

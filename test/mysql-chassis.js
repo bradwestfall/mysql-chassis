@@ -71,11 +71,7 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.select(sql, { user_id: 1 })).to.eventually.eql({
-          rows: [{ 1: 1 }],
-          fields: undefined,
-          sql: 'SELECT * FROM user WHERE user_id = 1'
-        })
+      expect(mysql.select(sql, { user_id: 1 })).to.eventually.eql([{ 1: 1 }])
         .and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)
@@ -101,11 +97,7 @@ describe('mysql-chassis', () => {
     mysql.connection = { query }
 
     it('should call internal query method', done => {
-      expect(mysql.selectFile('select', { user_id: 1 })).to.eventually.eql({
-          rows: [{ 1: 1 }],
-          fields: undefined,
-          sql: 'SELECT * FROM user WHERE user_id = 1'
-        })
+      expect(mysql.selectFile('select', { user_id: 1 })).to.eventually.eql([{ 1: 1 }])
         .and.notify(done)
         .then(() => {
           expect(mysql.connection.query).to.have.been.calledWith(sql)

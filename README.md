@@ -49,15 +49,24 @@ db.query('SELECT * FROM user')
   })
 ```
 
-The results object will contain the following properties:
+The results object for a `SELECT` statement will contain the following properties:
 
-- `affectedRows`: Populated for certain queries, like `DELETE`
-- `insertId`: Populated for certain queries, like `INSERT`
-- `changedRows`: Populated for certain queries, like `UPDATE`
-- `rows`: Populated for certain queries, like `SELECT`
+- `rows`: The same data that `node-mysql` would give you
+- `fields`: The same data that `node-mysql` would give you
+- `sql`: The SQL which was executed.
+
+The results object for non-SELECT statements, we'll pass back the same results object that `node-mysql` gives, which may or may not contain these fields (depending on the type of query):
+
+- `affectedRows`
+- `insertId`
+- `changedRows`
+- `fieldCount`
+- `serverStatus`
+- `warningCount`
+- `message`
 - `sql`: The SQL which was executed
-- `fields`: Field data as provided by `node-mysql`
-- `fieldCount`: Field Count data as provided by `node-mysql`
+
+> \* The `sql` field returned is what we add to the results from `node-mysql`. This is useful for debugging since __mysql-chassis__ builds `INSERT`, `UPDATE`, and `DELETE` statements for you when using the respective methods (see docs below).
 
 For an error, the error object will contain the following properties:
 
@@ -132,7 +141,7 @@ Works just like `queryFile()` in the sense that you can pass a filename in, but 
 
 - insert(_string_ __tableName__, _object_ __insertValues__)
 
-This method will write your `INSERT` statement for you and returns the same promise as `query()`. 
+This method will write your `INSERT` statement for you and returns the same promise as `query()`.
 
 The example assumes database columns: `name` and `email`
 
@@ -156,7 +165,7 @@ SET `name` = 'Brad', `email` = 'brad@foobar.com'
 
 - update(_string_ __tableName__, _object_ __updateValues__, _mixed_ __whereValues__)
 
-This method will write your `UPDATE` statement for you and returns the same promise as `query()`. 
+This method will write your `UPDATE` statement for you and returns the same promise as `query()`.
 
 The example assumes database columns: `name` and `email`
 
@@ -185,7 +194,7 @@ See more on [whereValues](#where) below
 
 - delete(_string_ __tableName__, _mixed_ __whereValues__)
 
-This method will write your `DELETE` statement for you and returns the same promise as `query()`. 
+This method will write your `DELETE` statement for you and returns the same promise as `query()`.
 
 ```js
 var whereValues = {user_id: 1, active: true}
@@ -217,7 +226,7 @@ If an object is passed in, it's properties and values will be turned into a `WHE
 ```js
 console.log(db.where({
     user_id: 1
-    active: true 
+    active: true
 })) // outputs: WHERE `user_id` = 1 AND `active` = true
 ```
 
