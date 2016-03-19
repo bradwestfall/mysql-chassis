@@ -1,6 +1,6 @@
 {
   "name": "mysql-chassis",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Wrapper code for node-mysql",
   "main": "dist/mysql-chassis.js",
   "jsnext:main": "dist/mysql-chassis.es2015.js",
