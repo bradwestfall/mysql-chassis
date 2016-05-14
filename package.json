@@ -3,6 +3,10 @@
   "version": "3.0.1",
   "description": "Wrapper code for node-mysql",
   "main": "dist/mysql-chassis.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bradwestfall/node-mysql-chassis.git"
+  },
   "jsnext:main": "dist/mysql-chassis.es2015.js",
   "scripts": {
     "build": "rm -rf dist && rollup -c && rollup -cf es6 -o dist/mysql-chassis.es2015.js",
