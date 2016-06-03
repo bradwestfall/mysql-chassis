@@ -21,15 +21,13 @@ class MySql {
     this.connection = mysql.createConnection(connectionOptions)
     this.settings = {sqlPath, transforms}
     this.middleware = {
-        'ON_BEFORE_QUERY': [],
-        'ON_RESULTS': []
+        onBeforeQuery: [],
+        onResults: []
     }
   }
 
   /**
    * Run a SELECT statement
-   * @param {string} sql
-   * @param {object} values - binding values
    */
   select(sql, values = {}) {
     return this.query(sql, values).then(results => results.rows)
@@ -37,8 +35,6 @@ class MySql {
 
   /**
    * Run a SELECT statement from a file
-   * @param {string} filename
-   * @param {object} values - binding values
    */
   selectFile(filename, values = {}) {
     return this.queryFile(filename, values).then(results => results.rows)
@@ -70,16 +66,15 @@ class MySql {
 
   /**
    * Prepare and run a query with bound values. Return a promise
-   * @param {string} sql
-   * @param {object} values - binding values
    */
-  query(sql, values = {}) {
+  query(originalSql, values = {}) {
     return new Promise((res, rej) => {
 
       // Apply Middleware
-      [sql, values] = this.applyMiddleware('ON_BEFORE_QUERY', sql, values)
+      values = this.applyMiddlewareOnBeforeQuery(values, originalSql)
 
-      let finalSql = this.queryFormat(sql, values).trim()
+      // Bind dynamic values to SQL
+      let finalSql = this.queryBindValues(originalSql, values).trim()
 
       this.connection.query(finalSql, (err, results, fields) => {
         if (err) {
@@ -87,12 +82,12 @@ class MySql {
         } else {
 
           // Apply Middleware
-          [sql, results] = this.applyMiddleware('ON_RESULTS', sql, results)
+          results = this.applyMiddlewareOnResults(results, originalSql)
 
           // If sql is SELECT
           if (this.isSelect(finalSql)) {
 
-            // Results is rows in the case of SELECT statements
+            // Results is the rows
             res({ rows: results, fields, sql: finalSql})
 
           } else {
@@ -133,7 +128,7 @@ class MySql {
    * Turns `SELECT * FROM user WHERE user_id = :user_id`, into
    *       `SELECT * FROM user WHERE user_id = 1`
    */
-  queryFormat(query, values) {
+  queryBindValues(query, values) {
     if (!values) return query
 
     return query.replace(/\:(\w+)/gm, (txt, key) =>
@@ -175,7 +170,7 @@ class MySql {
   }
 
   /**
-   * If the values of the "values" argument match the keys of the this.transforms
+   * If the argument values match the keys of the this.transforms
    * object, then use the transforms value instead of the supplied value
    */
   transformValues(values) {
@@ -199,8 +194,7 @@ class MySql {
   }
 
   isSelect(sql) {
-    sql = sql.trim().toUpperCase()
-    return sql.match(/^SELECT/)
+    return sql.trim().toUpperCase().match(/^SELECT/)
   }
 
 
@@ -208,19 +202,23 @@ class MySql {
     Middleware
   *****************************************/
 
-  use(type, middleware) {
+  onResults(middleware) {
     if (typeof middleware !== 'function') return
-    const typeArray = this.middleware[type.toUpperCase()]
-    if (!typeArray) return
-    typeArray.push(middleware)
+    this.middleware.onResults.push(middleware)
   }
 
-  applyMiddleware(type, ...args) {
-    const typeArray = this.middleware[type.toUpperCase()]
-    typeArray.forEach(function(middleware) {
-      args = middleware(args)
+  applyMiddlewareOnResults(rows, sql) {
+    this.middleware.onResults.map(middleware => {
+      rows = middleware(rows, sql)
     })
-    return args
+    return rows
+  }
+
+  applyMiddlewareOnBeforeQuery(values, sql) {
+    this.middleware.onBeforeQuery.map(middleware => {
+      values = middleware(values, sql)
+    })
+    return values
   }
 
 }
