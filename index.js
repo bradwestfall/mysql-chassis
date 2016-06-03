@@ -221,7 +221,7 @@ class MySql {
 
   applyMiddlewareOnBeforeQuery(sql, values) {
     this.middleware.onBeforeQuery.map(middleware => {
-      sql = middleware(values, sql)
+      sql = middleware(sql, values)
     })
     return sql
   }

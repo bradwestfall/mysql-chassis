@@ -41,8 +41,8 @@ describe('mysql-chassis', () => {
       expect(mysql.queryFile).to.exist
     })
 
-    it('should have a queryFormat method', () => {
-      expect(mysql.queryFormat).to.exist
+    it('should have a queryBindValues method', () => {
+      expect(mysql.queryBindValues).to.exist
     })
 
     it('should have a sqlWhere method', () => {
@@ -55,6 +55,22 @@ describe('mysql-chassis', () => {
 
     it('should have a transformValues method', () => {
       expect(mysql.transformValues).to.exist
+    })
+
+    it('should have a onResults method', () => {
+      expect(mysql.onResults).to.exist
+    })
+
+    it('should have a onBeforeQuery method', () => {
+      expect(mysql.onBeforeQuery).to.exist
+    })
+
+    it('should have a applyMiddlewareOnResults method', () => {
+      expect(mysql.applyMiddlewareOnResults).to.exist
+    })
+
+    it('should have a applyMiddlewareOnBeforeQuery method', () => {
+      expect(mysql.applyMiddlewareOnBeforeQuery).to.exist
     })
 
   })
@@ -248,10 +264,10 @@ describe('mysql-chassis', () => {
     })
   })
 
-  describe('queryFormat method', () => {
+  describe('queryBindValues method', () => {
     const mysql = new MySql()
     it('should allow named parameter binding with `:`', () => {
-      expect(mysql.queryFormat('SELECT :fields FROM :table WHERE :field = :value', {
+      expect(mysql.queryBindValues('SELECT :fields FROM :table WHERE :field = :value', {
         fields: 'name,date',
         table: 'user',
         field: 'id',
@@ -260,7 +276,7 @@ describe('mysql-chassis', () => {
     })
 
     it('should allow named parameter binding with `:` in multiline queries', () => {
-      expect(mysql.queryFormat(`SELECT :fields FROM :table
+      expect(mysql.queryBindValues(`SELECT :fields FROM :table
         WHERE :field = :value`, {
         fields: 'name,date',
         table: 'user',
@@ -318,39 +334,74 @@ describe('mysql-chassis', () => {
     })
   })
 
-  describe('use method', () => {
+  describe('onResults method', () => {
     const mysql = new MySql()
     const middleware = function() {}
 
-    mysql.use('ON_BEFORE_QUERY', middleware)
+    mysql.onResults(middleware)
 
-    it('should create middleware for ON_BEFORE_QUERY', () => {
-      expect(mysql.middleware.ON_BEFORE_QUERY[0]).to.equal(middleware)
-    })
-
-    mysql.use('ON_RESULTS', middleware)
-
-    it('should create a middleare for ON_RESULTS', () => {
-      expect(mysql.middleware.ON_RESULTS[0]).to.equal(middleware)
+    it('should create middleware for onResults', () => {
+      expect(mysql.middleware.onResults[0]).to.equal(middleware)
     })
 
     // Middleware should be a function
-    mysql.use('ON_RESULTS', null)
+    mysql.onResults('not a function')
 
     it('should not create middlware', () => {
-      expect(mysql.middleware.ON_RESULTS[1]).to.be.undefinded
+      expect(mysql.middleware.onResults[1]).to.be.undefinded
     })
 
   })
 
-  describe('applyMiddleware method', () => {
+  describe('onBeforeQuery method', () => {
+    const mysql = new MySql()
+    const middleware = function() {}
+
+    mysql.onBeforeQuery(middleware)
+
+    it('should create middleware for onBeforeQuery', () => {
+      expect(mysql.middleware.onBeforeQuery[0]).to.equal(middleware)
+    })
+
+    // Middleware should be a function
+    mysql.onBeforeQuery('not a function')
+
+    it('should not create middlware', () => {
+      expect(mysql.middleware.onBeforeQuery[1]).to.be.undefinded
+    })
+
+  })
+
+  describe('applyMiddlewareOnResults method', () => {
     const mysql = new MySql()
 
-    const middleware = args => args
-    mysql.use('ON_BEFORE_QUERY', middleware)
+    mysql.onResults((sql, results) => {
+      return (sql === 'ADD_ONE') ? ++results : results
+    })
 
-    it('should apply the middlware correctly', () => {
-      expect(mysql.applyMiddleware('ON_BEFORE_QUERY', 1, 2)).to.eql([1, 2])
+    it('should apply the onResults middleware correctly', () => {
+      expect(mysql.applyMiddlewareOnResults('ADD_ONE', 1)).to.equal(2)
+    })
+
+    it('should not apply the onResults middleware correctly', () => {
+      expect(mysql.applyMiddlewareOnResults('DO NOTHING', 1)).to.equal(1)
+    })
+
+  })
+
+  describe('applyMiddlewareOnBeforeQuery method', () => {
+    const mysql = new MySql()
+
+    mysql.onBeforeQuery((sql, values) => {
+      return (sql === 'ADD_ONE') ? ++values : values
+    })
+
+    it('should apply the onBeforeQuery middleware correctly', () => {
+      expect(mysql.applyMiddlewareOnBeforeQuery('ADD_ONE', 1)).to.equal(2)
+    })
+
+    it('should not apply the onBeforeQuery middleware correctly', () => {
+      expect(mysql.applyMiddlewareOnBeforeQuery('DO NOTHING', 1)).to.equal(1)
     })
 
   })
