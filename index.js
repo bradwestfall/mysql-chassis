@@ -71,10 +71,10 @@ class MySql {
     return new Promise((res, rej) => {
 
       // Apply Middleware
-      values = this.applyMiddlewareOnBeforeQuery(values, originalSql)
+      let finalSql = this.applyMiddlewareOnBeforeQuery(originalSql, values)
 
       // Bind dynamic values to SQL
-      let finalSql = this.queryBindValues(originalSql, values).trim()
+      finalSql = this.queryBindValues(finalSql, values).trim()
 
       this.connection.query(finalSql, (err, results, fields) => {
         if (err) {
@@ -82,7 +82,7 @@ class MySql {
         } else {
 
           // Apply Middleware
-          results = this.applyMiddlewareOnResults(results, originalSql)
+          results = this.applyMiddlewareOnResults(originalSql, results)
 
           // If sql is SELECT
           if (this.isSelect(finalSql)) {
@@ -207,18 +207,23 @@ class MySql {
     this.middleware.onResults.push(middleware)
   }
 
-  applyMiddlewareOnResults(rows, sql) {
-    this.middleware.onResults.map(middleware => {
-      rows = middleware(rows, sql)
-    })
-    return rows
+  onBeforeQuery(middleware) {
+    if (typeof middleware !== 'function') return
+    this.middleware.onBeforeQuery.push(middleware)
   }
 
-  applyMiddlewareOnBeforeQuery(values, sql) {
-    this.middleware.onBeforeQuery.map(middleware => {
-      values = middleware(values, sql)
+  applyMiddlewareOnResults(sql, results) {
+    this.middleware.onResults.map(middleware => {
+      results = middleware(sql, results)
     })
-    return values
+    return results
+  }
+
+  applyMiddlewareOnBeforeQuery(sql, values) {
+    this.middleware.onBeforeQuery.map(middleware => {
+      sql = middleware(values, sql)
+    })
+    return sql
   }
 
 }

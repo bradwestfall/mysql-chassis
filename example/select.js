@@ -12,16 +12,17 @@ var db = require('./connect');
  */
 
 // Middleware
-db.onResults(function(rows, sql) {
-  if (rows.length !== 1) return rows
-  return (sql.match(/^SELECT .+LIMIT 1$/g)) ? rows[0] : rows
-})
+db.onResults(function(sql, results) {
+  if (results.length !== 1) return results
+  return (sql.trim().match(/^SELECT(.|\s)+LIMIT 1$/g)) ? results[0] : results
+});
+
 
 /**
  * Run an SQL statement with some binding values
  */
 
-var bindValues = {id: 1}
+var bindValues = {id: 1};
 
 db.select('SELECT * FROM user WHERE user_id = :id LIMIT 1', bindValues)
   .then(function(rows) {
@@ -34,4 +35,4 @@ db.select('SELECT * FROM user WHERE user_id = :id LIMIT 1', bindValues)
 // Wait then close the connection to MySQL
 setTimeout(function() {
   db.connection.end();
-}, 200)
+}, 200);
