@@ -3,19 +3,22 @@ import path from 'path'
 import fs from 'fs'
 
 const defaultConnectionOptions = {
-    host: 'localhost',
-    password: '',
-    sqlPath: './sql',
-    transforms: {
-      undefined: 'NULL',
-      '': 'NULL',
-      'NOW()': 'NOW()',
-      'CURTIME()': 'CURTIME()'
-    }
+  password: '',
+  sqlPath: './sql',
+  transforms: {
+    undefined: 'NULL',
+    '': 'NULL',
+    'NOW()': 'NOW()',
+    'CURTIME()': 'CURTIME()'
+  }
 }
 
 class MySql {
-  constructor (options) {
+
+  /**
+   * Constructor (runs connection)
+   */
+  constructor (options, errCallback) {
     options = {...defaultConnectionOptions, ...options}
     const {sqlPath, transforms, ...connectionOptions} = options
     this.connection = mysql.createConnection(connectionOptions)
@@ -24,6 +27,9 @@ class MySql {
         onBeforeQuery: [],
         onResults: []
     }
+    this.connection.connect(err => {
+      if (typeof errCallback === 'function' && err) errCallback(err)
+    })
   }
 
   /**
@@ -80,6 +86,9 @@ class MySql {
         if (err) {
           rej({err, sql: finalSql})
         } else {
+
+          // When calling `connection.query`, the results returned are either "rows"
+          // in the case of an SQL statement, or meta results in the case of non-SQL
 
           // Apply Middleware
           results = this.applyMiddlewareOnResults(originalSql, results)

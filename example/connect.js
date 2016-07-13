@@ -1,9 +1,3 @@
-/**
- * This example assumes you've created a MySQL database on localhost
- * called "mysql-chassis" and with a user of "root" and no password.
- * This example also assumes a schema which you can find at ./schema.sql
- */
-
 var MySql = require('../dist/mysql-chassis');
 var path = require('path');
 
@@ -11,14 +5,22 @@ var path = require('path');
 var db = new MySql({
   database: 'mysql-chassis',
   user: 'root',
-  //sqlPath: path.resolve(__dirname, './sql')   // <--- If you want to use the selectFile() method
+  sqlPath: path.join(process.cwd(), './example/sql')
+}, function(err) {
+  console.error('error connecting: ' + err.stack);
 });
 
-// See if there was a connection error
-db.connection.connect(function(err) {
-  if (err) {
-    console.log(err.message)
-  }
-})
+// Middleware
+db.onResults(function(sql, results) {
+  if (results.length !== 1) return results
+  return /^SELECT\s(.|\n)+LIMIT 1$/g.test(sql.trim()) ? results[0] : results;
+});
+
+// Normally we would keep the connection as long as the server is running. But since
+// these examples are ran as NPM scripts and not long-running processes, we'll need
+// to shut it down. 200ms gives plenty of time for the examples to finish
+setTimeout(function() {
+  db.connection.end();
+}, 200);
 
 module.exports = db;
