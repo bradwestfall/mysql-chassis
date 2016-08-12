@@ -1,6 +1,6 @@
 # Node MySQL Chassis
 
-A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (formerly called `node-mysql`). It also provides additional functionality including `.insert()`, `.update()`, `.delete()`, and `.where()` methods to create SQL statements along with middleware to capabilities to allow custom functionality
+A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (formerly called `node-mysql`). It also provides additional functionality including `.insert()`, `.update()`, `.delete()`, and `.where()` methods to create SQL statements along with middleware to capabilities to allow custom functionality.
 
 ## Install
 
@@ -19,12 +19,12 @@ const db = new MySQL({
 });
 ```
 
-> Note that if you don't provide `password` or `host` options, MySQL Chassis will pass `password: ''` and `mysqljs` will provide`host: 'localhost'` by default.
+> Note that if you don't provide `password` or `host` options, MySQL Chassis will pass `password: ''` and `mysqljs` will provide `host: 'localhost'` by default.
 
 The options passed into MySQL Chassis will be passed directly to the `mysqljs` [createConnection()](https://github.com/mysqljs/mysql#introduction) method. The `db` instance returned gives you access to the MySQLChassis API. It also has `mysqljs`'s `connection` as an attribute:
 
 ```js
-// mysqljs's connection data
+// mysqljs's connection API
 db.connection
 ```
 
@@ -253,16 +253,16 @@ WHERE `user_id` = 1
 AND `active` = true
 ```
 
-See more on `.where()` below.
+See more on `.sqlWhere()` below.
 
 <hr>
 
-### db.where(whereClause)
+### db.sqlWhere(whereClause)
 
 This method is normally used by other API methods, such as `.update()`, and `.delete()`. You can also use it directly:
 
 ```js
-console.log(db.where({
+console.log(db.sqlWhere({
     user_id: 1
     active: true
 })) // outputs: WHERE `user_id` = 1 AND `active` = true
