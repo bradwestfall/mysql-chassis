@@ -146,8 +146,8 @@ class MySql {
   }
 
   /**
-   * Turns {user_id: 1, age: 30}, into
-   *       "WHERE user_id = 1 AND age = 30"
+   * Turns {user_id: 1, age: null}, into
+   *       "WHERE user_id = 1 AND age IS NULL"
    */
   sqlWhere(where) {
     if (!where) return
@@ -156,7 +156,12 @@ class MySql {
     const whereArray = []
 
     for (let key in where) {
-      whereArray.push('`' + key + '` = ' + mysql.escape(where[key]))
+      let value = where[key]
+      if (value === null) {
+        whereArray.push('`' + key + '` IS NULL')
+      } else {
+        whereArray.push('`' + key + '` = ' + mysql.escape(value))
+      }
     }
 
     return 'WHERE ' + whereArray.join(' AND ')
