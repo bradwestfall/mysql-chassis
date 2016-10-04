@@ -27,7 +27,7 @@
     "mysql": "^2.8.0"
   },
   "devDependencies": {
-    "babel": "^6.3.26",
+    "babel": "^6.5.2",
     "babel-preset-es2015-rollup": "^1.2.0",
     "babel-preset-stage-2": "^6.3.13",
     "babel-register": "^6.3.13",
