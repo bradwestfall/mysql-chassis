@@ -28,16 +28,16 @@
   },
   "devDependencies": {
     "babel": "^6.3.26",
-    "babel-preset-es2015-rollup": "^1.0.0",
+    "babel-preset-es2015-rollup": "^1.2.0",
     "babel-preset-stage-2": "^6.3.13",
     "babel-register": "^6.3.13",
     "chai": "^3.4.1",
-    "chai-as-promised": "^5.2.0",
-    "mocha": "^2.3.4",
-    "rollup": "^0.23.1",
+    "chai-as-promised": "^6.0.0",
+    "mocha": "^3.1.0",
+    "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.3.3",
     "sinon": "^1.17.2",
     "sinon-chai": "^2.8.0",
-    "standard": "^5.4.1"
+    "standard": "^8.3.0"
   }
 }
