@@ -47,6 +47,16 @@ class MySql {
   }
 
   /**
+   * Build and run a simple SELECT statement
+   */
+  selectWhere(fields, table, where) {
+    where = this.sqlWhere(where)
+    if (typeof fields === 'string') fields = fields.split(',')
+    if (Array.isArray(fields)) fields = fields.map(field => '`' + field.trim() + '`').join(', ')
+    return this.select(`SELECT ${fields} FROM \`${table}\` ${where}`)
+  }
+
+  /**
    * Build and run an INSERT statement
    */
   insert(table, values = {}) {

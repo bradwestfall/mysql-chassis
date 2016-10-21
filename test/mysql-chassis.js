@@ -21,6 +21,10 @@ describe('mysql-chassis', () => {
       expect(mysql.selectFile).to.exist
     })
 
+    it('should have a selectWhere method', () => {
+      expect(mysql.selectWhere).to.exist
+    })
+
     it('should have an insert method', () => {
       expect(mysql.insert).to.exist
     })
