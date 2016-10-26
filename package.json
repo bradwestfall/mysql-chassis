@@ -9,7 +9,7 @@
   },
   "jsnext:main": "dist/mysql-chassis.es2015.js",
   "scripts": {
-    "build": "rm -rf dist && babel index.js -out-file dist/mysql-chassis.js",
+    "build": "rm -rf dist && mkdir dist && babel index.js --out-file dist/mysql-chassis.js",
     "example:insert": "node ./example/insert.js",
     "example:select": "node ./example/select.js",
     "test": "mocha --compilers js:babel-register"

@@ -1,4 +1,4 @@
-var MySql = require('../dist/mysql-chassis');
+var MySql = require('../dist/mysql-chassis').default;
 var path = require('path');
 
 // Connect
