@@ -12,7 +12,15 @@ A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (formerly ca
 - [db.delete()](#dbdeletetablename-whereclause)
 - [db.sqlWhere()](#dbsqlwherewhereclause)
 
-It also provides a middleware layer for [db.onBeforeResults](https://github.com/bradwestfall/node-mysql-chassis#middleware) and [db.onResults](https://github.com/bradwestfall/node-mysql-chassis#middleware)
+It also provides a middleware layer for [db.onBeforeResults](https://github.com/bradwestfall/node-mysql-chassis#middleware) and [db.onResults](https://github.com/bradwestfall/node-mysql-chassis#middleware).
+
+Key features:
+- Promise-based layer over [mysqljs](https://github.com/mysqljs/mysql)
+- External SQL files
+- Named bind-parameter placeholders, similar to what [PDO offers](http://php.net/manual/en/pdostatement.bindparam.php)
+- Better results for `SELECT ... LIMIT BY 1` (see middleware)
+- SQL templates with EJS (see middleware)
+- "Transforms Feature" to normalize JS to SQL
 
 
 ## Install
