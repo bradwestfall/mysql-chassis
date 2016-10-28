@@ -1,0 +1,8 @@
+example
+src
+test
+.babelrc
+.editorconfig
+.gitignore
+.travis.yml
+README.md
