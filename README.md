@@ -44,6 +44,8 @@ const db = new MySQL({
 });
 ```
 
+If not using es6 `import`, use `require('mysql-chassis').default`
+
 > Note that if you don't provide `password` or `host` options, MySQL Chassis will pass `password: ''` and `mysqljs` will provide `host: 'localhost'` by default.
 
 The options passed into MySQL Chassis will be passed directly to the `mysqljs` [createConnection()](https://github.com/mysqljs/mysql#introduction) method. The `db` instance returned gives you access to the MySQLChassis API. It also has `mysqljs`'s `connection` as an attribute:
