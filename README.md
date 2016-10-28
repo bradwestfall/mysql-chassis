@@ -2,6 +2,8 @@
 
 A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (formerly called `node-mysql`). It also provides additional functionality including `.insert()`, `.update()`, `.delete()`, and `.where()` methods to create SQL statements along with middleware to capabilities to allow custom functionality.
 
+[![Build Status](https://travis-ci.org/bradwestfall/node-mysql-chassis.svg?branch=master)](https://travis-ci.org/bradwestfall/node-mysql-chassis)
+
 ## Install
 
 ```
