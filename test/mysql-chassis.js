@@ -3,7 +3,7 @@ const expect = chai.expect
 const sinon = require('sinon')
 chai.use(require('sinon-chai'))
 chai.use(require('chai-as-promised'))
-const MySql = require('../dist/mysql-chassis')
+const MySql = require('../dist/mysql-chassis').default
 
 describe('mysql-chassis', () => {
   describe('constructor', () => {
@@ -31,6 +31,14 @@ describe('mysql-chassis', () => {
 
     it('should have an update method', () => {
       expect(mysql.update).to.exist
+    })
+
+    it('should have an insertUpdate method', () => {
+      expect(mysql.insertUpdate).to.exist
+    })
+
+    it('should have an insertIgnore method', () => {
+      expect(mysql.insertIgnore).to.exist
     })
 
     it('should have a delete method', () => {
@@ -94,7 +102,7 @@ describe('mysql-chassis', () => {
       expect(mysql.select(sql, { user_id: 1 })).to.eventually.eql([{ 1: 1 }])
         .and.notify(done)
         .then(() => {
-          expect(mysql.connection.query).to.have.been.calledWith(sql)
+          expect(mysql.connection.query).to.have.been.calledWith('foosdfsdf')
         })
     })
 
@@ -139,11 +147,19 @@ describe('mysql-chassis', () => {
     })
   })
 
+
+
+  // describe('selectWhere method', () => {
+
+  // })
+
+
+
   describe('insert method', () => {
     const mysql = new MySql()
 
     mysql.query = function() {
-        return Promise.resolve({ insertId: 1 })
+      return Promise.resolve({ insertId: 1 })
     }
 
     it('should call internal query method', done => {
@@ -151,7 +167,7 @@ describe('mysql-chassis', () => {
     })
 
     mysql.query = function() {
-        return Promise.reject()
+      return Promise.reject()
     }
 
     it('should reject promise with error when internal query method errors', done => {
@@ -164,7 +180,7 @@ describe('mysql-chassis', () => {
     const mysql = new MySql()
 
     mysql.query = function() {
-        return Promise.resolve({ changedRows: 1 })
+      return Promise.resolve({ changedRows: 1 })
     }
 
     it('should call internal query method', done => {
@@ -172,7 +188,7 @@ describe('mysql-chassis', () => {
     })
 
     mysql.query = function() {
-        return Promise.reject()
+      return Promise.reject()
     }
 
     it('should reject promise with error when internal query method errors', done => {
@@ -181,11 +197,23 @@ describe('mysql-chassis', () => {
 
   })
 
+
+
+  // describe('insertUpdate method', () => {
+
+  // })
+
+  // describe('insertIgnore method', () => {
+
+  // })
+
+
+
   describe('delete method', () => {
     const mysql = new MySql()
 
     mysql.query = function() {
-        return Promise.resolve({ affectedRows: 1 })
+      return Promise.resolve({ affectedRows: 1 })
     }
 
     it('should call internal query method', done => {
@@ -193,7 +221,7 @@ describe('mysql-chassis', () => {
     })
 
     mysql.query = function() {
-        return Promise.reject()
+      return Promise.reject()
     }
 
     it('should reject promise with error when internal query method errors', done => {

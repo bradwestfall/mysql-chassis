@@ -47,7 +47,7 @@ class MySql {
   }
 
   /**
-   * Build and run a simple SELECT statement
+   * Build and run a simple SELECT statement from arguments
    */
   selectWhere(fields, table, where) {
     where = this.sqlWhere(where)
@@ -69,6 +69,25 @@ class MySql {
    */
   update(table, values, where) {
     const sql = `UPDATE \`${table}\` SET ${this.createInsertValues(values)} ${this.sqlWhere(where)}`
+    return this.query(sql)
+  }
+
+  /**
+   * Try running an INSERT statement. If the record already exists, run an update statement.
+   * This takes advantage of MySQL's `ON DUPLICATE KEY UPDATE` feature.
+   */
+  insertUpdate(table, values = {}) {
+    values = this.createInsertValues(values)
+    const sql = `INSERT INTO \`${table}\` SET ${values} ON DUPLICATE KEY UPDATE ${values}`
+    return this.query(sql)
+  }
+
+  /**
+   * Try running an INSERT statement. If the record already exists, ingore the request without error.
+   * This takes advantage of MySQL's `INSERT IGNORE` feature.
+   */
+  insertIgnore(table, values) {
+    const sql = `INSERT IGNORE INTO \`${table}\` SET ${this.createInsertValues(values)}`
     return this.query(sql)
   }
 
