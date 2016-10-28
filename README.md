@@ -1,8 +1,19 @@
 # Node MySQL Chassis
 
-A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (formerly called `node-mysql`). It also provides additional functionality including `.insert()`, `.update()`, `.delete()`, and `.where()` methods to create SQL statements along with middleware to capabilities to allow custom functionality.
-
 [![Build Status](https://travis-ci.org/bradwestfall/node-mysql-chassis.svg?branch=master)](https://travis-ci.org/bradwestfall/node-mysql-chassis)
+
+A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (formerly called `node-mysql`). It provides easy SQL methods including:
+
+- [db.query()](#dbquerysql-bindvalues)
+- [db.queryFile()](#dbqueryfilefilename-bindvalues)
+- [db.select()](#dbselectsql-bindvalues)
+- [db.selectFile()](#dbselectfilefilename-bindvalues)
+- [db.update()](#dbupdatetablename-updatevalues-whereclause)
+- [db.delete()](#dbdeletetablename-whereclause)
+- [db.sqlWhere()](#dbsqlwherewhereclause)
+
+It also provides a middleware layer for [db.onBeforeResults](https://github.com/bradwestfall/node-mysql-chassis#middleware) and [db.onResults](https://github.com/bradwestfall/node-mysql-chassis#middleware)
+
 
 ## Install
 
