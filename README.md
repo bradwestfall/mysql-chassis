@@ -36,15 +36,17 @@ npm install --save mysql-chassis
 ## Connect
 
 ```js
+// Non-ES6
+// var MySQl = require('mysql-chassis').default;
+
+// ES6
 import MySQL from 'mysql-chassis';
 
-const db = new MySQL({
+var db = new MySQL({
   database: 'databasename',
   user: 'username'
 });
 ```
-
-If not using es6 `import`, use `require('mysql-chassis').default`
 
 > Note that if you don't provide `password` or `host` options, MySQL Chassis will pass `password: ''` and `mysqljs` will provide `host: 'localhost'` by default.
 
