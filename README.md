@@ -9,7 +9,7 @@ A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (formerly ca
 - [db.select()](#dbselectsql-bindvalues)
 - [db.selectFile()](#dbselectfilefilename-bindvalues)
 - db.selectWhere() _In Development, coming soon_
-- [db.insert](#dbinserttablename-insertvalues)
+- [db.insert()](#dbinserttablename-insertvalues)
 - [db.update()](#dbupdatetablename-updatevalues-whereclause)
 - db.insertUpdate() _In Development, coming soon_
 - db.insertIgnore() _In Development, coming soon_
