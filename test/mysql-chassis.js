@@ -53,6 +53,10 @@ describe('mysql-chassis', () => {
       expect(mysql.queryFile).to.exist
     })
 
+    it('should have a getFile method', () => {
+      expect(mysql.getFile).to.exist
+    })
+
     it('should have an escape method', () => {
       expect(mysql.escape).to.exist
     })
@@ -300,6 +304,10 @@ describe('mysql-chassis', () => {
     })
   })
 
+
+  // describe('getFile method', () => {
+
+  // })
 
   // describe('escape method', () => {
 

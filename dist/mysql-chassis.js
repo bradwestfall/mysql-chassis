@@ -218,26 +218,36 @@ var MySql = function () {
 
       var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-
-      // Get full path
-      var filePath = _path2.default.resolve(_path2.default.join(this.settings.sqlPath, filename + (_path2.default.extname(filename) === '.sql' ? '' : '.sql')));
-
-      return new Promise(function (res, rej) {
-        // Read file and execute as SQL statement
-        _fs2.default.readFile(filePath, 'utf8', function (err, sql) {
-          if (err) {
-            rej('Cannot find: ' + err.path);
-          } else {
-            sql = sql.trim();
-            _this2.query(sql, values).then(res).catch(rej);
-          }
-        });
+      return this.getFile(filename).then(function (sql) {
+        return _this2.query(sql, values);
       });
     }
 
     /****************************************
       Helper Functions
     *****************************************/
+
+    /**
+     * Get File
+     */
+
+  }, {
+    key: 'getFile',
+    value: function getFile(filename) {
+
+      // Get full path
+      var filePath = _path2.default.resolve(_path2.default.join(this.settings.sqlPath, filename + (_path2.default.extname(filename) === '.sql' ? '' : '.sql')));
+
+      return new Promise(function (resolve, reject) {
+        _fs2.default.readFile(filePath, 'utf8', function (err, sql) {
+          if (err) {
+            reject('Cannot find: ' + err.path);
+          } else {
+            resolve(sql.trim());
+          }
+        });
+      });
+    }
 
     /**
      * Turns 'foo', into

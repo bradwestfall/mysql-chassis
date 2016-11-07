@@ -138,6 +138,19 @@ class MySql {
   }
 
   queryFile(filename, values = {}) {
+    return this.getFile(filename)
+      .then(sql => this.query(sql, values))
+  }
+
+
+  /****************************************
+    Helper Functions
+  *****************************************/
+
+  /**
+   * Get File
+   */
+  getFile(filename) {
 
     // Get full path
     const filePath = path.resolve(path.join(
@@ -145,22 +158,17 @@ class MySql {
       filename + (path.extname(filename) === '.sql' ? '' : '.sql')
     ))
 
-    return new Promise((res, rej) => {
-      // Read file and execute as SQL statement
+    return new Promise((resolve, reject) => {
       fs.readFile(filePath, 'utf8', (err, sql) => {
         if (err) {
-          rej('Cannot find: ' + err.path)
+          reject('Cannot find: ' + err.path)
         } else {
-          sql = sql.trim()
-          this.query(sql, values).then(res).catch(rej)
+          resolve(sql.trim())
         }
       })
     })
-  }
 
-  /****************************************
-    Helper Functions
-  *****************************************/
+  }
 
   /**
    * Turns 'foo', into
