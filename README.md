@@ -42,9 +42,11 @@ npm install --save mysql-chassis
 // ES6
 import MySQL from 'mysql-chassis';
 
-var db = new MySQL({
+const db = new MySQL({
   database: 'databasename',
   user: 'username'
+}, err => {
+  console.log('MySQL Error: ', err)
 });
 ```
 
@@ -83,6 +85,8 @@ const db = new MySQL({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   sqlPath: path.join(process.cwd(), './sql')
+}, err => {
+  console.log('MySQL Error: ', err)
 });
 
 export default db
