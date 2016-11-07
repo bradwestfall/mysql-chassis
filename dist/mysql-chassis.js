@@ -240,6 +240,17 @@ var MySql = function () {
     *****************************************/
 
     /**
+     * Turns 'foo', into
+     *       '\'foo\''
+     */
+
+  }, {
+    key: 'escape',
+    value: function escape(content) {
+      return _mysql2.default.escape(content);
+    }
+
+    /**
      * Turns `SELECT * FROM user WHERE user_id = :user_id`, into
      *       `SELECT * FROM user WHERE user_id = 1`
      */
@@ -247,10 +258,12 @@ var MySql = function () {
   }, {
     key: 'queryBindValues',
     value: function queryBindValues(query, values) {
+      var _this3 = this;
+
       if (!values) return query;
 
       return query.replace(/\:(\w+)/gm, function (txt, key) {
-        return values.hasOwnProperty(key) ? _mysql2.default.escape(values[key]) : txt;
+        return values.hasOwnProperty(key) ? _this3.escape(values[key]) : txt;
       });
     }
 
@@ -272,7 +285,7 @@ var MySql = function () {
         if (value === null) {
           whereArray.push('`' + key + '` IS NULL');
         } else {
-          whereArray.push('`' + key + '` = ' + _mysql2.default.escape(value));
+          whereArray.push('`' + key + '` = ' + this.escape(value));
         }
       }
 
@@ -316,7 +329,7 @@ var MySql = function () {
         if (this.settings.transforms.hasOwnProperty(rawValue)) {
           value = typeof transform === 'function' ? transform(rawValue, values) : transform;
         } else {
-          value = _mysql2.default.escape(rawValue);
+          value = this.escape(rawValue);
         }
 
         newObj[key] = value;

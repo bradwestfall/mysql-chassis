@@ -163,6 +163,14 @@ class MySql {
   *****************************************/
 
   /**
+   * Turns 'foo', into
+   *       '\'foo\''
+   */
+  escape(content) {
+    return mysql.escape(content)
+  }
+
+  /**
    * Turns `SELECT * FROM user WHERE user_id = :user_id`, into
    *       `SELECT * FROM user WHERE user_id = 1`
    */
@@ -170,7 +178,7 @@ class MySql {
     if (!values) return query
 
     return query.replace(/\:(\w+)/gm, (txt, key) =>
-      values.hasOwnProperty(key) ? mysql.escape(values[key]) : txt
+      values.hasOwnProperty(key) ? this.escape(values[key]) : txt
     )
   }
 
@@ -189,7 +197,7 @@ class MySql {
       if (value === null) {
         whereArray.push('`' + key + '` IS NULL')
       } else {
-        whereArray.push('`' + key + '` = ' + mysql.escape(value))
+        whereArray.push('`' + key + '` = ' + this.escape(value))
       }
     }
 
@@ -227,7 +235,7 @@ class MySql {
       if (this.settings.transforms.hasOwnProperty(rawValue)) {
         value = typeof transform === 'function' ? transform(rawValue, values) : transform
       } else {
-        value = mysql.escape(rawValue)
+        value = this.escape(rawValue)
       }
 
       newObj[key] = value

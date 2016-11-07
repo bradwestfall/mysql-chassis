@@ -53,6 +53,10 @@ describe('mysql-chassis', () => {
       expect(mysql.queryFile).to.exist
     })
 
+    it('should have an escape method', () => {
+      expect(mysql.escape).to.exist
+    })
+
     it('should have a queryBindValues method', () => {
       expect(mysql.queryBindValues).to.exist
     })
@@ -295,6 +299,12 @@ describe('mysql-chassis', () => {
         })
     })
   })
+
+
+  // describe('escape method', () => {
+
+  // })
+
 
   describe('queryBindValues method', () => {
     const mysql = new MySql()
