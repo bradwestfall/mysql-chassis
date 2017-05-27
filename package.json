@@ -4,7 +4,7 @@
   "description": "Wrapper code for node-mysql",
   "main": "dist/index.js",
   "repository": {
-    "url": "https://github.com/bradwestfall/node-mysql-chassis.git"
+    "url": "https://github.com/bradwestfall/mysql-chassis.git"
   },
   "jsnext:main": "dist/mysql-chassis.es2015.js",
   "scripts": {
