@@ -1,4 +1,4 @@
-# Node MySQL Chassis
+# MySQL Chassis
 
 [![Build Status](https://travis-ci.org/bradwestfall/node-mysql-chassis.svg?branch=master)](https://travis-ci.org/bradwestfall/node-mysql-chassis)
 
