@@ -1,6 +1,6 @@
 {
   "name": "mysql-chassis",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "Wrapper code for node-mysql",
   "main": "dist/index.js",
   "repository": {
