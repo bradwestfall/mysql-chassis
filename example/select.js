@@ -1,9 +1,9 @@
-var db = require('./connect');
+import db from './connect'
 
-var bindValues = {id: 1};
+const bindValues = { id: 1 }
 
-db.selectFile('select-users', bindValues).then(function(rows) {
-  console.log(rows)
-}).catch(function(error) {
-  console.error(error)
-});
+db.selectFile('select-users', bindValues).then(row => {
+  console.log(row)
+}).catch(err => {
+  console.error(err)
+})

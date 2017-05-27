@@ -2,16 +2,17 @@
   "name": "mysql-chassis",
   "version": "4.0.2",
   "description": "Wrapper code for node-mysql",
-  "main": "dist/mysql-chassis.js",
+  "main": "dist/index.js",
   "repository": {
-    "type": "git",
     "url": "https://github.com/bradwestfall/node-mysql-chassis.git"
   },
   "jsnext:main": "dist/mysql-chassis.es2015.js",
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && babel src --out-file dist/mysql-chassis.js",
-    "example:insert": "node ./example/insert.js",
-    "example:select": "node ./example/select.js",
+    "prepublish": "npm run build",
+    "clean": "rimraf dist",
+    "build": "npm run clean babel src --out-file dist",
+    "example:insert": "babel-node ./example/insert.js",
+    "example:select": "babel-node ./example/select.js",
     "test": "mocha --compilers js:babel-register"
   },
   "keywords": [
@@ -35,6 +36,7 @@
     "chai": "^3.4.1",
     "chai-as-promised": "^6.0.0",
     "mocha": "^3.1.0",
+    "rimraf": "^2.6.1",
     "sinon": "^1.17.2",
     "sinon-chai": "^2.8.0",
     "standard": "^8.3.0"

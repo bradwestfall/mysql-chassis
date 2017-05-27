@@ -1,9 +1,9 @@
-var db = require('./connect');
+import db from './connect'
 
-var insertValues = {first_name: 'Brad', last_name: 'Westfall', datetime_added: 'NOW()'}
+const insertValues = { first_name: 'Brad', last_name: 'Westfall', datetime_added: 'NOW()' }
 
-db.insertIgnore('user', insertValues).then(function(response) {
+db.insertIgnore('user', insertValues).then(response => {
   console.log('INSERT Response:', response)
-}).catch(function(error) {
-  console.log('INSERT Error:', error)
-});
+}).catch(err => {
+  console.error(err)
+})

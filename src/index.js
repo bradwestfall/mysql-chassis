@@ -24,8 +24,8 @@ class MySql {
     this.connection = mysql.createConnection(connectionOptions)
     this.settings = {sqlPath, transforms}
     this.middleware = {
-        onBeforeQuery: [],
-        onResults: []
+      onBeforeQuery: [],
+      onResults: []
     }
     this.connection.connect(err => {
       if (typeof errCallback === 'function' && err) errCallback(err)
@@ -111,7 +111,10 @@ class MySql {
       // Bind dynamic values to SQL
       finalSql = this.queryBindValues(finalSql, values).trim()
 
-      this.connection.query(finalSql, (err, results, fields) => {
+      this.connection.query({
+        sql: finalSql,
+        typeCast: (field, next) => field.type === 'JSON' ? JSON.parse(field.string()) : next()
+      }, (err, results, fields) => {
         if (err) {
           rej({err, sql: finalSql})
         } else {
