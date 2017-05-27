@@ -10,7 +10,7 @@
   "scripts": {
     "prepublish": "npm run build",
     "clean": "rimraf dist",
-    "build": "npm run clean babel src --out-file dist",
+    "build": "npm run clean && babel src --out-file dist/",
     "example:insert": "babel-node ./example/insert.js",
     "example:select": "babel-node ./example/select.js",
     "test": "mocha --compilers js:babel-register"
