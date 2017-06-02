@@ -198,7 +198,7 @@ class MySql {
    *       "WHERE user_id = 1 AND age IS NULL"
    */
   sqlWhere(where) {
-    if (!where) return
+    if (!where) return ''
     if (typeof where === 'string') return where
 
     const whereArray = []

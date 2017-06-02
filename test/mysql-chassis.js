@@ -1,13 +1,16 @@
-const chai = require('chai')
+import chai from 'chai'
+import sinon from 'sinon'
+import sinonChai from 'sinon-chai'
+import chaiAsPromised from 'chai-as-promised'
+import MySql from '../src/index'
+
 const expect = chai.expect
-const sinon = require('sinon')
-chai.use(require('sinon-chai'))
-chai.use(require('chai-as-promised'))
-const MySql = require('../dist/mysql-chassis').default
+chai.use(sinonChai)
+chai.use(chaiAsPromised)
 
 describe('mysql-chassis', () => {
   describe('constructor', () => {
-    let mysql = new MySql()
+    const mysql = new MySql()
 
     it('should construct the mysql object', () => {
       expect(mysql.connection).to.exist
