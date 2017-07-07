@@ -8,7 +8,7 @@
   },
   "jsnext:main": "dist/mysql-chassis.es2015.js",
   "scripts": {
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "clean": "rimraf dist",
     "build": "npm run clean && babel src --out-dir dist",
     "example:insert": "babel-node ./example/insert.js",
