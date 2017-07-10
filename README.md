@@ -1,6 +1,6 @@
 # MySQL Chassis
 
-[![Build Status](https://travis-ci.org/bradwestfall/node-mysql-chassis.svg?branch=master)](https://travis-ci.org/bradwestfall/node-mysql-chassis)
+[![Build Status](https://travis-ci.org/bradwestfall/mysql-chassis.svg?branch=master)](https://travis-ci.org/bradwestfall/mysql-chassis)
 
 A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (`mysqljs` is formerly called `node-mysql`). It provides easy SQL methods including:
 
