@@ -21,6 +21,7 @@ class MySql {
   constructor (options, errCallback) {
     options = {...defaultConnectionOptions, ...options}
     const {sqlPath, transforms, ...connectionOptions} = options
+    this.connectionOptions = connectionOptions
     this.connection = mysql.createConnection(connectionOptions)
     this.settings = {sqlPath, transforms}
     this.middleware = {
@@ -290,4 +291,48 @@ class MySql {
 
 }
 
+class MySqlPool extends MySql {
+  constructor (options, errCallback) {
+    super(options, errCallback)
+
+    this.connection = mysql.createPool(this.connectionOptions)
+
+    this.getConnection((err, connection) => {
+      if (typeof errCallback === 'function' && err) return errCallback(err)
+      connection && connection.release()
+    })
+
+    this.end = this.connection.end.bind(this.connection)
+    this.on = this.connection.on.bind(this.connection)
+  }
+
+  getConnection(cb) {
+    return this.connection.getConnection((err, connection) => {
+      // if connection is falsey (due to an err), pass whatever it is
+      // otherwise augment newly acquired connection
+      const augmentedConnection = connection ?
+        new _MySqlPoolConnection({ connection }) : connection
+
+      return cb(err, augmentedConnection)
+    })
+  }
+}
+
+// acquired pool connection from mysql's `getConnection`
+// extend it here with with mysql-chassis awesomeness
+class _MySqlPoolConnection extends MySql {
+  constructor(options, errCallback) {
+    super(options, errCallback)
+
+    if (!options.connection) {
+      throw Error('No pool connection passed.')
+    }
+
+    this.connection = options.connection
+
+    this.release = this.connection.release.bind(this.connection)
+  }
+}
+
 export default MySql
+export { MySqlPool }
