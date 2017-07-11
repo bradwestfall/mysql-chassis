@@ -30,6 +30,11 @@ class MySql {
     this.connection.connect(err => {
       if (typeof errCallback === 'function' && err) errCallback(err)
     })
+
+    // transactions
+    this.beginTransaction = this.connection.beginTransaction.bind(this.connection)
+    this.commit = this.connection.commit.bind(this.connection)
+    this.rollback = this.connection.rollback.bind(this.connection)
   }
 
   /**
