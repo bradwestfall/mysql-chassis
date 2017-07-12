@@ -32,9 +32,9 @@ class MySql {
     })
 
     // transactions
-    this.beginTransaction = this.connection.beginTransaction.bind(this.connection)
-    this.commit = this.connection.commit.bind(this.connection)
-    this.rollback = this.connection.rollback.bind(this.connection)
+    this.beginTransaction = (options, cb) => this.connection.beginTransaction(options, cb)
+    this.commit = (options, cb) => this.connection.commit(options, cb)
+    this.rollback = (options, cb) => this.connection.rollback(options, cb)
   }
 
   /**
