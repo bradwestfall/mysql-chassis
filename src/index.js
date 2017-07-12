@@ -122,7 +122,10 @@ class MySql {
         typeCast: (field, next) => field.type === 'JSON' ? JSON.parse(field.string()) : next()
       }, (err, results, fields) => {
         if (err) {
-          rej({ ...err, sql: finalSql })
+          // assign `sql` and preserve `message` prop
+          err.sql = finalSql
+
+          rej(err)
         } else {
 
           // When calling `connection.query`, the results returned are either "rows"
