@@ -1,6 +1,7 @@
 import mysql from 'mysql'
 import path from 'path'
 import fs from 'fs'
+import { promisify } from './utils'
 
 const defaultConnectionOptions = {
   password: '',
@@ -32,10 +33,7 @@ class MySql {
       if (typeof errCallback === 'function' && err) errCallback(err)
     })
 
-    // transactions
-    this.beginTransaction = (options, cb) => this.connection.beginTransaction(options, cb)
-    this.commit = (options, cb) => this.connection.commit(options, cb)
-    this.rollback = (options, cb) => this.connection.rollback(options, cb)
+    this.initTransactions()
   }
 
   /**
@@ -154,6 +152,11 @@ class MySql {
       .then(sql => this.query(sql, values))
   }
 
+  initTransactions() {
+    this.beginTransaction = promisify((options, cb) => this.connection.beginTransaction(options, cb))
+    this.commit = promisify((options, cb) => this.connection.commit(options, cb))
+    this.rollback = promisify((options, cb) => this.connection.rollback(options, cb))
+  }
 
   /****************************************
     Helper Functions
