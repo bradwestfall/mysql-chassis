@@ -96,6 +96,16 @@ describe('mysql-chassis', () => {
       expect(mysql.applyMiddlewareOnBeforeQuery).to.exist
     })
 
+    it('should have a beginTransaction method', () => {
+      expect(mysql.beginTransaction).to.exist
+    })
+    it('should have a commit method', () => {
+      expect(mysql.commit).to.exist
+    })
+    it('should have a rollback method', () => {
+      expect(mysql.rollback).to.exist
+    })
+
   })
 
   describe('select method', () => {
