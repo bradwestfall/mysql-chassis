@@ -326,6 +326,10 @@ describe('mysql-chassis', () => {
 
   // })
 
+  // describe('transaction methods', () => {
+
+  // })
+
 
   describe('queryBindValues method', () => {
     const mysql = new MySql()

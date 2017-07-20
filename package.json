@@ -13,6 +13,7 @@
     "build": "npm run clean && babel src --out-dir dist",
     "example:insert": "babel-node ./example/insert.js",
     "example:select": "babel-node ./example/select.js",
+    "example:transaction": "babel-node ./example/transaction.js",
     "test": "mocha --compilers js:babel-register"
   },
   "keywords": [
