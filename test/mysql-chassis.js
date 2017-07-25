@@ -326,9 +326,54 @@ describe('mysql-chassis', () => {
 
   // })
 
-  // describe('transaction methods', () => {
+  describe('transaction methods', () => {
+    const mysql = new MySql()
+    const transactionStatus = {
+      affectedRows: 0,
+      warningCount: 0,
+      serverStatus: 3 // SERVER_STATUS_IN_TRANS
+    }
+    const autoCommitStatus = {
+      ...transactionStatus,
+      serverStatus: 2 // SERVER_STATUS_AUTOCOMMIT
+    }
 
-  // })
+    it('should call internal beginTransaction method', sinon.test(done => {
+      const beginTransaction = sinon.stub(mysql.connection, 'beginTransaction')
+      beginTransaction.onFirstCall().callsArgWith(0, null, transactionStatus)
+
+      expect(mysql.beginTransaction()).to.eventually.eql(transactionStatus)
+        .then(() => {
+          sinon.assert.calledOnce(beginTransaction);
+          done()
+        })
+        .catch(err => done(err))
+    }))
+
+    it('should call internal commit method', sinon.test(done => {
+      const commit = sinon.stub(mysql.connection, 'commit')
+      commit.onFirstCall().callsArgWith(0, null, transactionStatus)
+
+      expect(mysql.commit()).to.eventually.eql(transactionStatus)
+        .then(() => {
+          sinon.assert.calledOnce(commit);
+          done()
+        })
+        .catch(err => done(err))
+    }))
+
+    it('should call internal rollback method', sinon.test(done => {
+      const rollback = sinon.stub(mysql.connection, 'rollback')
+      rollback.onFirstCall().callsArgWith(0, null, autoCommitStatus)
+
+      expect(mysql.rollback()).to.eventually.eql(autoCommitStatus)
+        .then(() => {
+          sinon.assert.calledOnce(rollback);
+          done()
+        })
+        .catch(err => done(err))
+    }))
+  })
 
 
   describe('queryBindValues method', () => {
