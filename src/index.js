@@ -22,18 +22,66 @@ class MySql {
   constructor (options, errCallback) {
     options = {...defaultConnectionOptions, ...options}
     const {sqlPath, transforms, ...connectionOptions} = options
-    this.connectionOptions = connectionOptions
-    this.connection = mysql.createConnection(connectionOptions)
+    this.connection = this.connect(connectionOptions)
     this.settings = {sqlPath, transforms}
     this.middleware = {
       onBeforeQuery: [],
       onResults: []
     }
-    this.connection.connect(err => {
-      if (typeof errCallback === 'function' && err) errCallback(err)
-    })
+
+    this.testConnection(errCallback)
 
     this.initTransactions()
+    this.initPool(connectionOptions)
+    this.exposeMethods()
+  }
+
+  /**
+   * Connects to mysql using provided options.
+   *
+   * Connection can be
+   *  1. regular (non-pooled) - 'createConnection'
+   *  2. pool connection instance - 'createPool'. It
+   *    has a `getConnection` method that returns a
+   *    connection.
+   *  3. pool connection - connection that is returned
+   *    from pool.getConnection (2). This connection
+   *    is raw mysqljs connection (1) but it
+   *    needs to be chassis-ified
+   *
+   * @param      {Object}  connectionOptions  The connection options
+   * @return     {Object}  The mysql connection
+   */
+  connect(connectionOptions) {
+    if (connectionOptions._connection) {
+      return connectionOptions._connection
+    }
+
+    // check if it is pool. only interested in truthiness,
+    // error handling is on the mysqljs side if the value is
+    // not a number
+    const isPool = !!connectionOptions.connectionLimit
+
+    return mysql[isPool ? 'createPool' : 'createConnection'](connectionOptions)
+  }
+
+  /**
+   * Tests the connections.
+   * Uses either `connect` (non-pooled) connection or
+   * `getConnection` if it is a pool connection.
+   * Executes user-defined callback if exists.
+   * Releases the pool connection if there is one
+   * and there is no error.
+   *
+   * @param      {Function}  cb      { err - mysqljs connection error }
+   */
+  testConnection(cb) {
+    const isPool = !!this.connection.getConnection
+    this.connection[isPool ? 'getConnection' : 'connect']((err, connection) => {
+      // execute the err callback if there is an err
+      if (typeof errCallback === 'function' && err) return errCallback(err)
+      if (connection && connection.release) connection.release()
+    })
   }
 
   /**
@@ -156,6 +204,34 @@ class MySql {
     this.beginTransaction = promisify((options, cb) => this.connection.beginTransaction(options, cb))
     this.commit = promisify((options, cb) => this.connection.commit(options, cb))
     this.rollback = promisify((options, cb) => this.connection.rollback(options, cb))
+  }
+
+  initPool(connectionOptions) {
+    this.getConnection = (cb) => {
+      return this.connection.getConnection((err, connection) => {
+        if (err) return cb(err)
+        const chassisified = connection && new MySql({
+          ...connectionOptions,
+          _connection: connection
+        })
+
+        if (!chassisified) return cb(new Error('Could not return new connection'))
+
+        return cb(null, chassisified)
+      })
+    }
+
+    if (this.connection.release) {
+      // has no callback, no need to be promisified
+      this.release = this.connection.release.bind(this.connection)
+    }
+  }
+
+  exposeMethods() {
+    this.end = promisify(cb => this.connection.end(cb))
+
+    // on('event') method does not make sense to be promisified
+    this.on = this.connection.on.bind(this.connection)
   }
 
   /****************************************
@@ -302,48 +378,4 @@ class MySql {
 
 }
 
-class MySqlPool extends MySql {
-  constructor (options, errCallback) {
-    super(options, errCallback)
-
-    this.connection = mysql.createPool(this.connectionOptions)
-
-    this.getConnection((err, connection) => {
-      if (typeof errCallback === 'function' && err) return errCallback(err)
-      connection && connection.release()
-    })
-
-    this.end = this.connection.end.bind(this.connection)
-    this.on = this.connection.on.bind(this.connection)
-  }
-
-  getConnection(cb) {
-    return this.connection.getConnection((err, connection) => {
-      // if connection is falsey (due to an err), pass whatever it is
-      // otherwise augment newly acquired connection
-      const augmentedConnection = connection ?
-        new _MySqlPoolConnection({ connection }) : connection
-
-      return cb(err, augmentedConnection)
-    })
-  }
-}
-
-// acquired pool connection from mysql's `getConnection`
-// extend it here with with mysql-chassis awesomeness
-class _MySqlPoolConnection extends MySql {
-  constructor(options, errCallback) {
-    super(options, errCallback)
-
-    if (!options.connection) {
-      throw Error('No pool connection passed.')
-    }
-
-    this.connection = options.connection
-
-    this.release = this.connection.release.bind(this.connection)
-  }
-}
-
 export default MySql
-export { MySqlPool }
