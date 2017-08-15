@@ -16,4 +16,4 @@ CREATE TABLE `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 ```
 
-Then run `npm run example:insert` and `npm run example:select` to see the code run.
+Then run `npm run example:*` (`*` being `insert`, `select`, `transaction` or `pool`) to see the code run.

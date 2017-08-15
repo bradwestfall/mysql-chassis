@@ -14,6 +14,7 @@
     "example:insert": "babel-node ./example/insert.js",
     "example:select": "babel-node ./example/select.js",
     "example:transaction": "babel-node ./example/transaction.js",
+    "example:pool": "babel-node ./example/pool.js",
     "test": "mocha --compilers js:babel-register"
   },
   "keywords": [
