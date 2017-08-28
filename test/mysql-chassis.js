@@ -105,6 +105,15 @@ describe('mysql-chassis', () => {
     it('should have a rollback method', () => {
       expect(mysql.rollback).to.exist
     })
+    it('should have a getConnection method', () => {
+      expect(mysql.getConnection).to.exist
+    })
+    it('should have an end method', () => {
+      expect(mysql.end).to.exist
+    })
+    it('should have an on method', () => {
+      expect(mysql.on).to.exist
+    })
 
   })
 
@@ -379,6 +388,23 @@ describe('mysql-chassis', () => {
     }))
   })
 
+  describe('pool methods', () => {
+    const options = {
+      connectionLimit: 5
+    }
+    const mysql = new MySql(options)
+
+    it('should call internal getConnection method', sinon.test(() => {
+      const getConnection = sinon.spy(mysql.connection, 'getConnection')
+
+      mysql.getConnection(() => {})
+      sinon.assert.calledOnce(getConnection)
+    }))
+
+    it('should expose pool connection', () => {
+      expect(mysql.connection.config.connectionLimit).to.eql(options.connectionLimit)
+    })
+  })
 
   describe('queryBindValues method', () => {
     const mysql = new MySql()
