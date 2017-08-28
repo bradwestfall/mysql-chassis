@@ -1,5 +1,6 @@
 *.log
 .DS_Store
+example/sandbox.js
 node_modules
 npm-debug.log
 dist

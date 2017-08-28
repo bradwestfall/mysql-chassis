@@ -95,6 +95,33 @@ class MySql {
   }
 
   /**
+   * Insert multiple values in one statement. This method creates an sql statement similar to:
+   *  INSERT INTO table
+   *    (a,b,c)
+   *  VALUES
+   *    (1,2,3),
+   *    (4,5,6),
+   *    (7,8,9);
+   */
+  insertMultiple(table, cols, objects) {
+    // If only two arguments are passed, the second argument becomes objects
+    // and we will derive `cols` from the first object
+    if (objects === undefined) cols = Object.keys(objects[0])
+
+    const values = objects.map(obj => {
+      const uniformObj = []
+      obj = this.transformValues(obj)
+      cols.forEach(col => {
+        uniformObj.push(obj[col] || 'null')
+      })
+      return `(${uniformObj.join(',')})`
+    })
+
+    const sql = `INSERT INTO \`${table}\` (\`${cols.join('`,`')}\`) VALUES ${values.join(',')}`
+    return this.query(sql)
+  }
+
+  /**
    * Build and run a DELETE statement
    */
   delete(table, where) {

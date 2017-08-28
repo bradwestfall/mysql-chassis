@@ -228,6 +228,10 @@ describe('mysql-chassis', () => {
 
   // })
 
+  // describe('insertMultiple method', () => {
+
+  // })
+
 
 
   describe('delete method', () => {
