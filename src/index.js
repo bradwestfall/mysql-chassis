@@ -155,7 +155,10 @@ class MySql {
   insertMultiple(table, cols, objects) {
     // If only two arguments are passed, the second argument becomes objects
     // and we will derive `cols` from the first object
-    if (objects === undefined) cols = Object.keys(objects[0])
+    if (objects === undefined) {
+      objects = cols
+      cols = Object.keys(objects[0])
+    }
 
     const values = objects.map(obj => {
       const uniformObj = []
