@@ -6,6 +6,8 @@ import { promisify } from './utils'
 const defaultConnectionOptions = {
   password: '',
   sqlPath: './sql',
+  retryLimit: Infinity,
+  connectionLimit: null, // If this is set to a numeric value, the connection will be "pooled"
   transforms: {
     undefined: 'NULL',
     '': 'NULL',
@@ -16,73 +18,144 @@ const defaultConnectionOptions = {
 
 class MySql {
 
-  /**
-   * Constructor (runs connection)
-   */
-  constructor (options, errCallback) {
-    options = {...defaultConnectionOptions, ...options}
-    const {sqlPath, transforms, ...connectionOptions} = options
-    this.connection = this.connect(connectionOptions)
-    this.settings = {sqlPath, transforms}
+  /****************************************
+    Setup and Initialization
+  *****************************************/
+
+  constructor(options) {
+    options = { ...defaultConnectionOptions, ...options }
+    const { sqlPath, retryLimit, transforms, ...connectionOptions } = options
+    this.connectionTries = 0
+    this.retryLimit = retryLimit
+
+    // Events that can be hooked into
+    this.events = {
+      connectionAttempt: null,
+      connectionSuccess: null,
+      connectionError: null,
+      connectionLost: null,
+      connectionTriesLimitReached: null,
+      sqlError: null
+    }
+
+    // Misc Setup
+    this.settings = { sqlPath, transforms }
     this.middleware = {
       onBeforeQuery: [],
       onResults: []
     }
 
-    this.testConnection(errCallback)
+    // Connect
+    const isPool = Number.isInteger(connectionOptions.connectionLimit) && connectionOptions.connectionLimit > 0
+    this.connection = this.connect(connectionOptions, isPool)
 
+    // Finish setting up pooling
+    if (isPool) this.initPool(connectionOptions)
+
+    // Setup Transactions (after connection)
     this.initTransactions()
-    this.initPool(connectionOptions)
-    this.exposeMethods()
   }
 
   /**
-   * Connects to mysql using provided options.
-   *
-   * Connection can be
-   *  1. regular (non-pooled) - 'createConnection'
-   *  2. pool connection instance - 'createPool'. It
-   *    has a `getConnection` method that returns a
-   *    connection.
-   *  3. pool connection - connection that is returned
-   *    from pool.getConnection (2). This connection
-   *    is raw mysqljs connection (1) but it
-   *    needs to be chassis-ified
-   *
-   * @param      {Object}  connectionOptions  The connection options
-   * @return     {Object}  The mysql connection
+   * Events
    */
-  connect(connectionOptions) {
-    if (connectionOptions._connection) {
-      return connectionOptions._connection
+
+  on(eventName, cb) {
+    if (typeof eventName !== 'string') throw new Error('You must pass a string value for MySQL Chassis .on() events')
+    if (!this.events.hasOwnProperty(eventName)) throw new Error(`MySQL Chassis does not have a db.on('${eventName}') event. If you're trying to access the underlying connection events from MySQLJS, use db.connection.on instead.`)
+    this.events[eventName] = cb
+  }
+
+  emit(eventName, ...args) {
+    if (typeof eventName !== 'string') throw new Error('You must pass a string value for MySQL Chassis .on() events')
+    if (!this.events.hasOwnProperty(eventName)) throw new Error(`MySQL Chassis does not have a db.on('${eventName}') event. If you're trying to access the underlying connection events from MySQLJS, use db.connection.on instead.`)
+    if (typeof this.events[eventName] !== 'function') return
+    this.events[eventName](...args)
+  }
+
+  /**
+   * MySQL Transactions
+   */
+
+  initTransactions() {
+    this.transactions = {}
+    this.transactions.begin= promisify((options, cb) => this.connection.beginTransaction(options, cb))
+    this.transactions.commit = promisify((options, cb) => this.connection.commit(options, cb))
+    this.transactions.rollback = promisify((options, cb) => this.connection.rollback(options, cb))
+  }
+
+
+  /**
+   * Connect to the database using the underlying MySQLJS lib
+   * This method attempts to reconnect when the connection is lost
+   */
+  connect(connectionOptions, pool = false) {
+    this.connectionTries++
+    if (this.connectionTries > this.retryLimit) {
+      this.emit('connectionTriesLimitReached', this.connectionTries - 1)
+      return
+    }
+    this.emit('connectionAttempt', this.connectionTries)
+    if (connectionOptions._connection) return connectionOptions._connection
+
+    // Connection
+    const connection = pool ? mysql.createPool(connectionOptions) : mysql.createConnection(connectionOptions)
+
+    // Test initial connection
+    connection[pool ? 'getConnection' : 'connect'](err => {
+      // This error occurs when we cannot make a connection
+      if (err) {
+        this.emit('connectionError', err)
+        setTimeout(() => {
+          this.connect(connectionOptions)
+        }, 1000)
+      } else {
+        this.emit('connectionSuccess', this.connectionTries)
+        this.connectionTries = 0
+      }
+    })
+
+    // This event fires when an established connection is lost
+    connection.on('error', err => {
+      this.emit('connectionLost', err)
+      if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+        this.connect(connectionOptions)
+      } else {
+        throw err
+      }
+    })
+
+    return connection
+  }
+
+  /**
+   *  Initialize Pooling Methods
+   */
+
+  initPool(connectionOptions) {
+    this.getConnection = (cb) => {
+      return this.connection.getConnection((err, connection) => {
+        if (err) return cb(err)
+        const chassisified = connection && new MySql({
+          ...connectionOptions,
+          _connection: connection
+        })
+
+        if (!chassisified) return cb(new Error('Could not return new connection'))
+
+        return cb(null, chassisified)
+      })
     }
 
-    // check if it is pool. only interested in truthiness,
-    // error handling is on the mysqljs side if the value is
-    // not a number
-    const isPool = !!connectionOptions.connectionLimit
-
-    return mysql[isPool ? 'createPool' : 'createConnection'](connectionOptions)
+    if (this.connection.release) {
+      // has no callback, no need to be promisified
+      this.release = this.connection.release.bind(this.connection)
+    }
   }
 
-  /**
-   * Tests the connections.
-   * Uses either `connect` (non-pooled) connection or
-   * `getConnection` if it is a pool connection.
-   * Executes user-defined callback if exists.
-   * Releases the pool connection if there is one
-   * and there is no error.
-   *
-   * @param      {Function}  cb      { err - mysqljs connection error }
-   */
-  testConnection(cb) {
-    const isPool = !!this.connection.getConnection
-    this.connection[isPool ? 'getConnection' : 'connect']((err, connection) => {
-      // execute the err callback if there is an err
-      if (typeof errCallback === 'function' && err) return errCallback(err)
-      if (connection && connection.release) connection.release()
-    })
-  }
+  /****************************************
+    SQL
+  *****************************************/
 
   /**
    * Run a SELECT statement
@@ -103,6 +176,7 @@ class MySql {
    */
   selectWhere(fields, table, where) {
     where = this.sqlWhere(where)
+    if (typeof table !== 'string') throw new Error('selectWhere table argument must be a string')
     if (typeof fields === 'string') fields = fields.split(',')
     if (Array.isArray(fields)) fields = fields.map(field => '`' + field.trim() + '`').join(', ')
     return this.select(`SELECT ${fields} FROM \`${table}\` ${where}`)
@@ -152,10 +226,10 @@ class MySql {
    *    (4,5,6),
    *    (7,8,9);
    */
-  insertMultiple(table, cols, objects) {
+  insertMultiple(table, objects, cols) {
     // If only two arguments are passed, the second argument becomes objects
     // and we will derive `cols` from the first object
-    if (objects === undefined) cols = Object.keys(objects[0])
+    if (cols === undefined) cols = Object.keys(objects[0])
 
     const values = objects.map(obj => {
       const uniformObj = []
@@ -182,7 +256,7 @@ class MySql {
    * Prepare and run a query with bound values. Return a promise
    */
   query(originalSql, values = {}) {
-    return new Promise((res, rej) => {
+    return new Promise((resolve, reject) => {
 
       // Apply Middleware
       let finalSql = this.applyMiddlewareOnBeforeQuery(originalSql, values)
@@ -197,24 +271,24 @@ class MySql {
         if (err) {
           // assign `sql` and preserve `message` prop
           err.sql = finalSql
-
-          rej(err)
+          this.emit('sqlError', err)
+          reject(err)
         } else {
-
-          // When calling `connection.query`, the results returned are either "rows"
-          // in the case of an SQL statement, or meta results in the case of non-SQL
 
           // Apply Middleware
           results = this.applyMiddlewareOnResults(originalSql, results)
+
+          // When calling `connection.query`, the results returned are either "rows"
+          // in the case of a SELECT statement, or meta results in the case of non-SELECT
 
           // If sql is SELECT
           if (this.isSelect(finalSql)) {
 
             // Results is the rows
-            res({ rows: results, fields, sql: finalSql})
+            resolve({ rows: results, fields, sql: finalSql})
 
           } else {
-            res({ ...results, sql: finalSql })
+            resolve({ ...results, sql: finalSql })
           }
 
         }
@@ -227,42 +301,9 @@ class MySql {
       .then(sql => this.query(sql, values))
   }
 
-  initTransactions() {
-    this.beginTransaction = promisify((options, cb) => this.connection.beginTransaction(options, cb))
-    this.commit = promisify((options, cb) => this.connection.commit(options, cb))
-    this.rollback = promisify((options, cb) => this.connection.rollback(options, cb))
-  }
-
-  initPool(connectionOptions) {
-    this.getConnection = (cb) => {
-      return this.connection.getConnection((err, connection) => {
-        if (err) return cb(err)
-        const chassisified = connection && new MySql({
-          ...connectionOptions,
-          _connection: connection
-        })
-
-        if (!chassisified) return cb(new Error('Could not return new connection'))
-
-        return cb(null, chassisified)
-      })
-    }
-
-    if (this.connection.release) {
-      // has no callback, no need to be promisified
-      this.release = this.connection.release.bind(this.connection)
-    }
-  }
-
-  exposeMethods() {
-    this.end = promisify(cb => this.connection.end(cb))
-
-    // on('event') method does not make sense to be promisified
-    this.on = this.connection.on.bind(this.connection)
-  }
 
   /****************************************
-    Helper Functions
+    SQL Helper Functions
   *****************************************/
 
   /**
@@ -356,13 +397,9 @@ class MySql {
     for (let key in values) {
       const rawValue = values[key]
       const transform = this.settings.transforms[rawValue]
-      let value
-
-      if (this.settings.transforms.hasOwnProperty(rawValue)) {
-        value = typeof transform === 'function' ? transform(rawValue, values) : transform
-      } else {
-        value = this.escape(rawValue)
-      }
+      const value = this.settings.transforms.hasOwnProperty(rawValue)
+        ? typeof transform === 'function' ? transform(rawValue, values) : transform
+        : this.escape(rawValue)
 
       newObj[key] = value
     }
@@ -390,14 +427,14 @@ class MySql {
   }
 
   applyMiddlewareOnResults(sql, results) {
-    this.middleware.onResults.map(middleware => {
+    this.middleware.onResults.forEach(middleware => {
       results = middleware(sql, results)
     })
     return results
   }
 
   applyMiddlewareOnBeforeQuery(sql, values) {
-    this.middleware.onBeforeQuery.map(middleware => {
+    this.middleware.onBeforeQuery.forEach(middleware => {
       sql = middleware(sql, values)
     })
     return sql

@@ -8,11 +8,12 @@ A promise-based API for [mysqljs](https://github.com/mysqljs/mysql) (`mysqljs` i
 - [db.queryFile()](#dbqueryfilefilename-bindvalues)
 - [db.select()](#dbselectsql-bindvalues)
 - [db.selectFile()](#dbselectfilefilename-bindvalues)
-- db.selectWhere() _In Development, coming soon_
+- [db.selectWhere()](#dbselectwherefields-table-whereclause)
 - [db.insert()](#dbinserttablename-insertvalues)
+- [db.insertMultiple](#dbinsertmultipletablename-values-columntemplate)
 - [db.update()](#dbupdatetablename-updatevalues-whereclause)
-- db.insertUpdate() _In Development, coming soon_
-- db.insertIgnore() _In Development, coming soon_
+- [db.insertIgnore()](#dbinsertignoretablename-insertvalues)
+- [db.insertUpdate()](#dbinsertupdatetablename-values)
 - [db.delete()](#dbdeletetablename-whereclause)
 - [db.sqlWhere()](#dbsqlwherewhereclause)
 
@@ -35,6 +36,8 @@ npm install --save mysql-chassis
 
 ## Connect
 
+Quickstart Example:
+
 ```js
 // Non-ES6
 // var MySQl = require('mysql-chassis').default;
@@ -45,31 +48,32 @@ import MySQL from 'mysql-chassis';
 const db = new MySQL({
   database: 'databasename',
   user: 'username'
-}, err => {
-  console.log('MySQL Error: ', err)
 });
 ```
 
 > Note that if you don't provide `password` or `host` options, MySQL Chassis will pass an empty string as the password and `mysqljs` already passes `localhost` by default.
 
-The options passed into MySQL Chassis will be passed directly to the `mysqljs` [createConnection()](https://github.com/mysqljs/mysql#introduction) method. The `db` instance returned gives you access to the MySQLChassis API. It also has `mysqljs`'s `connection` as an attribute:
+The options passed in are a blend of MySQL Chassis and `mysqljs` options. Any options that `mysqljs` [createConnection()](https://github.com/mysqljs/mysql#introduction) or [createPool()](https://github.com/mysqljs/mysql#pooling-connections) can receive will be passed through. Access to the `mysqljs` underlying connection (pooled or un-pooled) is given as follows:
+
 
 ```js
-// mysqljs's connection API
+const db = new MySQL({
+  database: 'databasename',
+  user: 'username'
+});
+
+// mysqljs' connection object
 db.connection
 ```
 
-`mysqljs` has an extensive API which you'll still have access to via the `db.connection` object. See more details at [their documentation](https://github.com/mysqljs/mysql#introduction)
-
-
 ### MySQL Chassis Connection Options
 
-Aside from the connection options required for `mysqljs`, you can also pass in these additional options for MySQL Chassis:
+As stated before, the options passed into MySQL Chassis are a blend of MySQL Chassis options and the underlying `mysqljs` library. See [their connection options](https://github.com/mysqljs/mysql#connection-options) for more details. For MySQL Chassis, here are the options:
 
-- `sqlPath`: A filepath where SQL files can be found. This is used by `selectFile()` and `queryFile()`. If no value is passed, it defaults to `./sql`
-- `transforms`: An object for transform settings. See [Transforms](#transforms) below
-
-To see a full list of other options that `mysqljs` can use, [see their documentation](https://github.com/mysqljs/mysql#connection-options)
+- `password`: Even though this is a `mysqljs` option, we just want to note that if this is omitted, then `null` is sent to `mysqljs`.
+- `sqlPath`: A filepath where SQL files can be found. This is used by `selectFile()` and `queryFile()`. If no value is passed. Default value is `./sql`
+- `retryLimit`: How many times should MySQL Chassis try to re-connect if a connection is not made initially, or if a connection is lost. Default value is `Infinity`
+- `transforms`: An object for transform settings. See [Transforms](#transforms) below.
 
 ### Example Connection
 
@@ -85,16 +89,43 @@ const db = new MySQL({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   sqlPath: path.join(process.cwd(), './sql')
-}, err => {
-  console.log('MySQL Error: ', err)
 });
 
-export default db
+db.on('connectionAttempt', tries => {
+  console.log(`MySQL Chassis: Trying to connect. Try: ${tries}`)
+});
+
+db.on('connectionSuccess', tries => {
+  console.log(`MySQL Chassis: Connection Success. Try: ${tries}`)
+});
+
+db.on('connectionError', err => {
+  console.error('MySQL Chassis: Could not establish connection. Code:', err.code)
+});
+
+db.on('connectionLost', err => {
+  console.error('MySQL Chassis: Connection was lost. Code:', err.code)
+});
+
+db.on('connectionTriesLimitReached', tries => {
+  console.error(`MySQL Chassis: Quit trying to connect after ${tries} tries`)
+});
+
+db.on('sqlError', err => {
+  console.error(`MySQL Chassis: SQL Error`, { SQL: err.sql, Code: err.code })
+});
+
+// SELECT a user
+
+const userId = 1
+db.selectFile('SELECT * FROM user WHERE user_id = :userId LIMIT 1', { userId })
+  .then(row => console.log(row))
+  .catch(err => console.error(err));
+
+export default db;
 ```
 
-This assumes you have `process.env` setup to be different depending on production vs development. Also, this will allow you to place your SQL files in an `sql` folder at the project root. Adjust as needed.
-
-See the `.queryFile()` method below for an example of how to use SQL statements as files instead of inline strings.
+See the `.queryFile()` and `.selectFile()` method below for an example of how to use SQL statements as files instead of inline strings.
 
 
 ## Results
@@ -104,8 +135,8 @@ All query execution methods return a promise with the results of the SQL:
 ```js
 db.query('SELECT * FROM user').then(function(results) {
   console.log(results)
-}).catch(function(error) {
-  console.log(error)
+}).catch(err => {
+  console.log(err)
 })
 ```
 
@@ -142,16 +173,15 @@ If there's an error, the promise `.catch(err)` will give you:
 `query()` can be used to execute any type of SQL. If the query is an `SELECT` statement, you can access the rows returned via `result.rows`:
 
 ```js
-db.query('SELECT * FROM user').then(function(result) {
-  console.log(result.rows)
-})
+db.query('SELECT * FROM user')
+  .then(result => console.log(result.rows));
 ```
 
 If you need to pass dynamic values into your query, use the `bindValues` option which will properly escape the values with `mysqljs`'s `connection.escape()` method.
 
 ```js
-let bindValues = {id: 1}
-db.query('SELECT * FROM user WHERE user_id = :id', bindValues)
+const bindValues = { id: 1 };
+db.query('SELECT * FROM user WHERE user_id = :id', bindValues);
 ```
 
 When you use the `bindValues` option, you'll also use placeholders in your SQL (such as `:id`) to map where the values should be placed.
@@ -166,8 +196,8 @@ Works just like `query()` except it allows you to pass a filename instead of SQL
 As an example:
 
 ```js
-let bindValues = {id: 1}
-db.queryFile('somefile', bindValues)
+const bindValues = { id: 1 };
+db.queryFile('somefile', bindValues);
 ```
 
 This assumes `somefile.sql` exists in the `sqlPath` folder and looks like this:
@@ -181,7 +211,7 @@ If the file exists, `.queryFile()` will behave exactly like `.query()`
 Also, if you want to organize your SQL files into sub folders of the `sqlPath`, you can access those files as:
 
 ```js
-let bindValues = {id: 1}
+const bindValues = { id: 1 };
 db.queryFile('path/to/somefile', bindValues)
 ```
 
@@ -202,13 +232,11 @@ Use `.select()` over `.query()` if
 As a proof of concept, these two method calls would output the same data for `rows`:
 
 ```js
-db.select('SELECT * FROM user').then(function(rows) {
-  console.log(rows)
-})
+db.select('SELECT * FROM user')
+  .then(rows => console.log(rows))
 
-db.query('SELECT * FROM user').then(function(results) {
-  console.log(results.rows)
-})
+db.query('SELECT * FROM user')
+  .then(results => console.log(results.rows))
 ```
 
 <hr>
@@ -217,6 +245,15 @@ db.query('SELECT * FROM user').then(function(results) {
 
 Works just like `.queryFile()` in the sense that you can pass a filename in, but works like `.select()` in the sense of how it returns `rows` instead of `results`.
 
+
+### db.selectWhere(fields, table, whereClause)
+
+Creates a `SELECT ${fields} FROM ${table} ${where}` statement and runs it through `.select()`
+
+- `fields`: Can be a comma delimited string or an array of strings. Either way, the fields will be normalized with backticks (in case you have any MySQL reserved words) and trimmed of whitespace.
+- `table`: Must be a string.
+- `where`: (optional) Uses `.sqlWhere()` to build a `WHERE`. See docs below for more on `.sqlWhere()`.
+
 <hr>
 
 ### db.insert(tableName, insertValues)
@@ -224,11 +261,10 @@ Works just like `.queryFile()` in the sense that you can pass a filename in, but
 This method will write your `INSERT` statement for you and then return the results of `.query()`. Here's how we can execute an `INSERT` statement for a user with `name` and `email` fields:
 
 ```js
-let insertValues = {name: 'Brad', email: 'brad@foobar.com'};
+const insertValues = {name: 'Brad', email: 'brad@foobar.com'};
 
-db.insert('user', insertValues).then(function(results) {
-  console.log(results.insertId)
-});
+db.insert('user', insertValues)
+  .then(results => console.log(results.insertId));
 ```
 
 The `INSERT` statement executed would be:
@@ -240,13 +276,47 @@ SET `name` = 'Brad', `email` = 'brad@foobar.com'
 
 <hr>
 
+### db.insertMultiple(tableName, values, columnTemplate)
+
+Allows multiple inserts to be performed in one SQL statement (better for performance than looping and creating individual inserts when many are needed). Similar to:
+
+```sql
+INSERT INTO `some_table`
+  (col1, col2, col3)
+VALUES
+  (1,2,3),
+  (4,5,6),
+  (7,8,9)
+```
+
+- `table`: Must be a string.
+- `values`: Must be an array of objects, where each object represents the column name and values to be inserted into a new row. Note that the order of the properties in `values` does not determine their placement in the SQL statement. The order that is used in the SQL statement depends on `columnTemplate` and the algorithm will map the keys of the `values` objects to the `columnTemplate`.
+- `columnTemplate`: (optional) Must be an array of unique column names. This will be used as the "columns" section of the SQL statement. If not provided, this method will use the fields of the first object in `values` to make the `columnTemplate`
+
+Here's an example:
+
+```js
+const insertValues = [
+  { datetime_added: 'NOW()', first_name: 'Brad' },
+  { first_name: 'Dave', last_name: 'Smith', datetime_added: 'NOW()' }
+];
+
+db.insertMultiple('user', insertValues, ['first_name', 'last_name', 'datetime_added'])
+  .then(response => console.log(response))
+  .catch(err => console.log(err));
+```
+
+As you can see, the "uniformity" of the two objects for `values` do not match. That is okay in this case because we provided the last argument, an array indicating which columns we want. However, without that array, we would not get the desired result since the first object's keys `datetime_added` and `first_name` would be used as the column template, and therefore leaving the `first_name` out of the second insert. So always provide the third `columnTemplate` argument if you can.
+
+<hr>
+
 ### db.update(tableName, updateValues, whereClause)
 
 This method will write your `UPDATE` statement for you and then return the results of `.query()`. Here's how we can execute an `UPDATE` statement for a user to update `name` and `email` fields:
 
 ```js
-let updateValues = {name: 'Brad', email: 'brad@foobar.com'};
-let whereClause = {user_id: 1, active: true};
+const updateValues = { name: 'Brad', email: 'brad@foobar.com' };
+const whereClause = { user_id: 1, active: true };
 
 db.update('user', updateValues, whereClause).then(function(results) {
   console.log(results.changedRows)
@@ -266,16 +336,31 @@ See more on `.where()` below.
 
 <hr>
 
+### db.insertIgnore(tableName, insertValues)
+
+Same as `.insert()`, but if they primary key already exists, then the `INSERT` will be ignored. This will not produce an error or warning.
+
+This relies on MySQL's `INSERT IGNORE` feature.
+
+<hr>
+
+### db.insertUpdate(tableName, values)
+
+Attempt an `INSERT` statement, but of the primary key already exists and therefore the record cannot be inserted, then switch to an `UPDATE` statement.
+
+This relies on MySQL's `ON DUPLICATE KEY UPDATE` feature.
+
+<hr>
+
 ### db.delete(tableName, whereClause)
 
 This method will write your `DELETE` statement for you and returns the same promise as `query()`.
 
 ```js
-let  whereClause = {user_id: 1, active: true};
+const whereClause = { user_id: 1, active: true };
 
-db.delete('user', whereClause).then(function(results) {
-  console.log(results.affectedRows)
-});
+db.delete('user', whereClause)
+  .then(results => console.log(results.affectedRows));
 ```
 
 The `DELETE` statement executed would be:
@@ -296,8 +381,8 @@ This method is normally used by other API methods, such as `.update()`, and `.de
 
 ```js
 console.log(db.sqlWhere({
-    user_id: 1
-    active: true
+  user_id: 1
+  active: true
 })) // outputs: WHERE `user_id` = 1 AND `active` = true
 ```
 
@@ -306,7 +391,7 @@ Values passed in will be escaped using `mysqljs`'s `connection.escape()` method.
 If a string is passed in, the string will be returned without changes and without escaping. This allows you to write custom "where-clauses" as needed:
 
 ```js
-db.update('user', updateValues, 'WHERE user.datetime_added < NOW()')
+db.update('user', updateValues, 'WHERE user.datetime_added < NOW()');
 ```
 
 <hr>
@@ -316,12 +401,12 @@ db.update('user', updateValues, 'WHERE user.datetime_added < NOW()')
 For custom functionality, you can add middleware to be ran before or after queries are executed:
 
 ```js
-db.onBeforeQuery(function(sql, bindValues) {
+db.onBeforeQuery((sql, bindValues) => {
   // Here you can modify the SQL before it is ran
   return sql;
 });
 
-db.onResults(function(sql, results) {
+db.onResults((sql, results) => {
   // Here you can modify the results before they are returned
   return results;
 });
@@ -332,7 +417,7 @@ db.onResults(function(sql, results) {
 __Example 1__: `mysqljs` always returns an array of rows regardless of how many rows are returned. But if you wanted to modify the results such that when the `SELECT` statement has a `LIMIT 1` at the end, then it will just return an object for the one row, then this is how that could be done:
 
 ```js
-db.onResults(function(sql, results) {
+db.onResults((sql, results) => {
   if (results.length !== 1) return results;
   return /^SELECT\s(.|\n)+LIMIT 1$/g.test(sql.trim()) ? results[0] : results;
 });
@@ -341,13 +426,13 @@ db.onResults(function(sql, results) {
 __Example 2__: If you feel inclined to treat your SQL files as templates which can be dynamic depending on the `bindValues`, you can use middleware with [ejs templates](https://github.com/mde/ejs)
 
 ```js
-db.onBeforeQuery(function(sql, bindValues) {
+db.onBeforeQuery((sql, bindValues) => {
   sql = ejs.compile(sql)(bindValues);
   return sql;
 });
 ```
 
-Now, imagine your SQL statements can be written as follows:
+Now, your SQL statements can be written as follows:
 
 ```sql
 # file.sql
@@ -359,10 +444,10 @@ WHERE user_id = :id
 <% } %>
 ```
 
-Running this command will now be able to determine if the SQL statement runs with the `AND active = true` part or not:
+Now, running the following will result in the `AND active = true` part of the SQL running
 
 ```js
-db.select('file', {id: 1, active: true})
+db.select('file', { id: 1, active: true });
 ```
 
 <hr>
@@ -379,13 +464,13 @@ transforms: {
   '': 'NULL',
   'NOW()': 'NOW()',
   'CURTIME()': 'CURTIME()'
-}
+};
 ```
 
 As an example, let's say we pass `undefined` or an empty string into our `.insert()` method:
 
 ```js
-db.insert('user', {name: '', email: undefined});
+db.insert('user', { name: '', email: undefined });
 ```
 
 Ideally for MySQL, you would want those values transformed to MySQL's `NULL`

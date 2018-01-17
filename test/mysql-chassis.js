@@ -11,6 +11,7 @@ chai.use(chaiAsPromised)
 describe('mysql-chassis', () => {
   describe('constructor', () => {
     const mysql = new MySql()
+    const mysqlPooled = new MySql({ connectionLimit: 10 })
 
     it('should construct the mysql object', () => {
       expect(mysql.connection).to.exist
@@ -96,21 +97,22 @@ describe('mysql-chassis', () => {
       expect(mysql.applyMiddlewareOnBeforeQuery).to.exist
     })
 
-    it('should have a beginTransaction method', () => {
-      expect(mysql.beginTransaction).to.exist
+    it('should have a transactions.begin method', () => {
+      expect(mysql.transactions.begin).to.exist
     })
-    it('should have a commit method', () => {
-      expect(mysql.commit).to.exist
+
+    it('should have a transactions.commit method', () => {
+      expect(mysql.transactions.commit).to.exist
     })
-    it('should have a rollback method', () => {
-      expect(mysql.rollback).to.exist
+
+    it('should have a transactions.rollback method', () => {
+      expect(mysql.transactions.rollback).to.exist
     })
+
     it('should have a getConnection method', () => {
-      expect(mysql.getConnection).to.exist
+      expect(mysqlPooled.getConnection).to.exist
     })
-    it('should have an end method', () => {
-      expect(mysql.end).to.exist
-    })
+
     it('should have an on method', () => {
       expect(mysql.on).to.exist
     })
@@ -355,7 +357,7 @@ describe('mysql-chassis', () => {
       const beginTransaction = sinon.stub(mysql.connection, 'beginTransaction')
       beginTransaction.onFirstCall().callsArgWith(0, null, transactionStatus)
 
-      expect(mysql.beginTransaction()).to.eventually.eql(transactionStatus)
+      expect(mysql.transactions.begin()).to.eventually.eql(transactionStatus)
         .then(() => {
           sinon.assert.calledOnce(beginTransaction);
           done()
@@ -367,7 +369,7 @@ describe('mysql-chassis', () => {
       const commit = sinon.stub(mysql.connection, 'commit')
       commit.onFirstCall().callsArgWith(0, null, transactionStatus)
 
-      expect(mysql.commit()).to.eventually.eql(transactionStatus)
+      expect(mysql.transactions.commit()).to.eventually.eql(transactionStatus)
         .then(() => {
           sinon.assert.calledOnce(commit);
           done()
@@ -379,7 +381,7 @@ describe('mysql-chassis', () => {
       const rollback = sinon.stub(mysql.connection, 'rollback')
       rollback.onFirstCall().callsArgWith(0, null, autoCommitStatus)
 
-      expect(mysql.rollback()).to.eventually.eql(autoCommitStatus)
+      expect(mysql.transactions.rollback()).to.eventually.eql(autoCommitStatus)
         .then(() => {
           sinon.assert.calledOnce(rollback);
           done()
