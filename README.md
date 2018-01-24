@@ -418,8 +418,10 @@ __Example 1__: `mysqljs` always returns an array of rows regardless of how many 
 
 ```js
 db.onResults((sql, results) => {
-  if (results.length !== 1) return results;
-  return /^SELECT\s(.|\n)+LIMIT 1$/g.test(sql.trim()) ? results[0] : results;
+  // Remove Comments (any line that starts with `#`)
+  const sqlStripped = sql.split('\n').filter(line => line.charAt(0) !== '#').join('\n').trim()
+  // If the SQL starts with `SELECT ` and ends with `LIMIT 1` (after comments were removed)
+  return /^SELECT\s(.|\n)+LIMIT 1$/g.test(sqlStripped) ? results[0] || null : results
 });
 ```
 
