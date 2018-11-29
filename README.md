@@ -517,7 +517,7 @@ const db = new MySQL({
   user: 'username',
   transforms: {
     'lookForThisValue': 'replaceWithThisValue', // Custom
-    '': 'Empty Value' // Override default
+    '': 'NULL' // Turn empty strings into MySQL Null Values
   }
 });
 ```
